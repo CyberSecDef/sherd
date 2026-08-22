@@ -46,6 +46,16 @@ type Node struct {
 type Document struct {
 	Source []byte
 	Root   *Node
+
+	// opts is remembered so Reparse produces a tree in the same dialect as the
+	// one it is amending. The zero value is strict CommonMark, which is what a
+	// Document built by hand — in a test, say — should get.
+	opts Options
+
+	// refDefs records whether the document contains a link reference
+	// definition, which makes any block's rendering depend on the whole file.
+	// Computed once, because Reparse needs it on every edit.
+	refDefs bool
 }
 
 // Walk calls fn for every node in document order, depth first. Returning false

@@ -4,6 +4,8 @@
 package conformance
 
 import (
+	"fmt"
+	"sort"
 	"strings"
 	"testing"
 
@@ -134,4 +136,125 @@ func lastByte(s string) []byte {
 		return []byte{0}
 	}
 	return []byte{s[len(s)-1]}
+}
+
+// TestIncrementalReparseMatchesFullReparse is the whole warrant for
+// FR-MD-004's fast path. An incremental parser that is merely fast is a
+// liability: a tree that disagrees with the file gets written back over the
+// file. So the property asserted is equality with the answer a full reparse
+// would have given, over every document in the corpus and a spread of edits
+// designed to break block structure — inserting fences, blank lines, list
+// markers, and unbalanced delimiters at arbitrary byte offsets, including
+// offsets in the middle of a multi-byte character.
+//
+// The generator is a fixed-seed sequence, so a failure names an exact edit
+// that reproduces it.
+func TestIncrementalReparseMatchesFullReparse(t *testing.T) {
+	cases := load(t)
+	rng := &lcg{state: 20260822}
+
+	var incremental, total int
+	for _, c := range cases {
+		if len(c.Source) == 0 {
+			continue
+		}
+		opts := markdown.Options{Flavor: markdown.CommonMark}
+		if c.Flavor == FlavorSherd {
+			opts.Flavor = markdown.Sherd
+		}
+		doc := markdown.Parse(c.Source, opts)
+
+		for k := 0; k < 4; k++ {
+			e := randomEdit(rng, c.Source)
+			got, inc := doc.Reparse(e)
+			want := markdown.Parse(applyEdit(c.Source, e), opts)
+
+			total++
+			if inc {
+				incremental++
+			}
+			if err := got.Validate(); err != nil {
+				t.Errorf("%s: reparse after %v produced an invalid tree: %v", c.ID, e, err)
+				continue
+			}
+			if g, w := dump(got), dump(want); g != w {
+				t.Errorf("%s: reparse after replacing %s with %q disagrees with a full parse\n incremental:\n%s\n full:\n%s",
+					c.ID, e.Range, e.Text, g, w)
+			}
+		}
+	}
+
+	// A reparser that always falls back would pass every check above while
+	// delivering none of the requirement. This asserts the fast path is real.
+	if incremental*10 < total {
+		t.Errorf("only %d of %d edits took the incremental path; FR-MD-004's fast path is not doing any work",
+			incremental, total)
+	}
+	t.Logf("%d of %d edits reparsed incrementally", incremental, total)
+}
+
+// randomEdit produces replacements slanted towards the bytes that change block
+// structure, since those are where incremental and full parsing diverge.
+func randomEdit(r *lcg, src []byte) markdown.Edit {
+	replacements := []string{
+		"", "x", "\n", "\n\n", "#", "# ", "- ", "> ", "```", "~~~", "*", "**",
+		"`", "[", "]", "](", "[a]: /b", "<div>", "|", "1. ", "    ", "\t",
+	}
+	start := r.intn(len(src) + 1)
+	end := start + r.intn(minInt(9, len(src)-start+1))
+	return markdown.Edit{
+		Range: markdown.Range{Start: start, End: end},
+		Text:  []byte(replacements[r.intn(len(replacements))]),
+	}
+}
+
+func applyEdit(src []byte, e markdown.Edit) []byte {
+	out := make([]byte, 0, len(src))
+	out = append(out, src[:e.Range.Start]...)
+	out = append(out, e.Text...)
+	return append(out, src[e.Range.End:]...)
+}
+
+// dump renders a tree in a canonical form, so that comparing two trees is a
+// string comparison and a mismatch reads as a diff.
+func dump(d *markdown.Document) string {
+	var sb strings.Builder
+	var walk func(n *markdown.Node, depth int)
+	walk = func(n *markdown.Node, depth int) {
+		fmt.Fprintf(&sb, "%*s%s %s %q", depth*2, "", n.Type, n.Range, n.Literal)
+		keys := make([]string, 0, len(n.Attrs))
+		for k := range n.Attrs {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			fmt.Fprintf(&sb, " %s=%v", k, n.Attrs[k])
+		}
+		sb.WriteByte('\n')
+		for _, c := range n.Children {
+			walk(c, depth+1)
+		}
+	}
+	walk(d.Root, 0)
+	return sb.String()
+}
+
+// lcg is a small deterministic generator. The standard library's would do, but
+// a fixed-seed sequence written here is reproducible across Go versions, which
+// matters when a failure has to be reproduced from a commit message.
+type lcg struct{ state uint64 }
+
+func (r *lcg) intn(n int) int {
+	if n <= 0 {
+		return 0
+	}
+	r.state = r.state*6364136223846793005 + 1442695040888963407
+	return int((r.state >> 33) % uint64(n))
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

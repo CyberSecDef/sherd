@@ -33,7 +33,14 @@ func Parse(source []byte, opts Options) *Document {
 	b.repair(n)
 	mergeText(n)
 
-	return &Document{Source: source, Root: n}
+	doc := &Document{Source: source, Root: n, opts: opts}
+	n.Walk(func(c *Node) bool {
+		if c.Type == "link_reference_definition" {
+			doc.refDefs = true
+		}
+		return !doc.refDefs
+	})
+	return doc
 }
 
 type builder struct{ src []byte }
@@ -663,11 +670,16 @@ func nodeType(gn ast.Node) string {
 	return snake(gn.Kind().String())
 }
 
+// snake converts a goldmark kind name to the corpus's lower-case form.
+// Acronyms stay whole: "HTMLBlock" is html_block, not h_t_m_l_block.
 func snake(s string) string {
+	rs := []rune(s)
+	upper := func(i int) bool { return i >= 0 && i < len(rs) && rs[i] >= 'A' && rs[i] <= 'Z' }
+
 	var out strings.Builder
-	for i, r := range s {
+	for i, r := range rs {
 		if r >= 'A' && r <= 'Z' {
-			if i > 0 {
+			if i > 0 && (!upper(i-1) || (i+1 < len(rs) && !upper(i+1))) {
 				out.WriteByte('_')
 			}
 			r += 'a' - 'A'
