@@ -291,13 +291,13 @@ in pieces first, each with an exit criterion that names what to run, so
 
 | # | Sub-step | Status |
 |---|---|---|
-| **P0.2.1** | Read path and the fixture corpus | ⬅️ **in progress** |
-| **P0.2.2** | The extent scanner | ⬜ |
+| **P0.2.1** | Read path and the fixture corpus | ✅ |
+| **P0.2.2** | The extent scanner | ⬅️ **next** |
 | **P0.2.3** | The surgical writer | ⬜ |
 | **P0.2.4** | Property types and the vault registry | ⬜ |
 | **P0.2.5** | The property test and the phase gate | ⬜ |
 
-#### P0.2.1 Read path and the fixture corpus
+#### P0.2.1 Read path and the fixture corpus ✅
 - `pkg/format/frontmatter` locates the block (`FR-MD-024`), reads its YAML, and
   touches nothing: the document is a set of byte ranges into the source, as in
   `pkg/format/markdown`, because a writer that splices bytes needs positions and
@@ -325,6 +325,35 @@ in pieces first, each with an exit criterion that names what to run, so
   document reassembled from them is the file it came from; every fixture either
   parses or reports a position; `no`/`yes`/`on`/`off` and `1_000` are text and
   `2026-08-22` is a date.
+
+**Delivered.** `go test ./pkg/format/frontmatter/ -v`:
+
+| Exit criterion | Status | Evidence |
+|---|---|---|
+| The ranges account for every byte | ✅ | `checked 212 fixtures` — the five ranges reassemble each file exactly *and* are contiguous, which reassembly alone would not prove: five ranges can overlap and still concatenate to the right bytes. |
+| Positions land on the source | ✅ | `checked 408 properties`: every key offset sits on its key, every value offset on the value's first byte. |
+| Every fixture reads or reports | ✅ | `200 of the 200 round-trip fixtures read cleanly, 0 pending in the ratchet`; the `read/` fixtures assert their own outcomes, several of them errors. |
+| The YAML 1.1 footgun is off | ✅ | `no`/`yes`/`on`/`off`/`y`/`n` stay text, `!!bool no` is still a boolean, `1_000` stays text, `2026-08-21` is a date. |
+| Coverage stays over the `QA-001` floor | ✅ | `make cover` → `pkg/format 95.4% (841/881)`, up from a 0.1-point margin to 0.4. |
+
+*Two footguns the corpus found that the requirement does not name.* `zip: 01234`
+decodes to **668** — YAML 1.1 read a leading zero as octal, `yaml.v3` still
+does, and the 1.2 core schema dropped the form. `isbn: 0080420621` is the same
+mistake wearing a different tag: an `8` cannot be octal, so the resolver gives
+up and calls it a float, and the ISBN becomes `8.0420621e+07`. Both now stay
+text, on the reasoning already applied to `1_000`: a leading zero in a note is a
+zip code, an ISBN, or a padded identifier, and every one of those stops being
+itself the moment it becomes a number. Hexadecimal and `0o` octal are YAML 1.2
+forms and still resolve.
+
+*Two limits recorded rather than fixed.* `yaml.v3` reports a parse error's line
+in prose and no column at all, and for an unterminated flow collection it blames
+the line above the bracket; the line is translated from the block to the file so
+it matches the user's editor, and the imprecision that remains is the library's.
+And a merge key resolves on read — `<<: *defaults` yields the anchored keys,
+with a local key winning — which is what a decoder does, but it means a caller
+reading `prod` cannot see which keys were inherited. Neither affects the write
+path, which never re-serializes anything.
 
 #### P0.2.2 The extent scanner
 - Given a key, the exact byte range of its value: block scalars (`|`, `>`, `|+`,

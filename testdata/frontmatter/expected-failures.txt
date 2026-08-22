@@ -1,0 +1,21 @@
+# Frontmatter fixtures known not to round-trip yet, one identifier per line.
+#
+# This file is a RATCHET, on the model of the conformance corpus:
+#
+#   listed and failing    -> reported as pending, build stays green
+#   listed and PASSING    -> build FAILS: delete the line
+#   unlisted and failing  -> build FAILS: a regression
+#
+# So the file can only shrink, and progress cannot be silently lost. Its diff
+# is the progress report for P0.2.
+#
+# An identifier is the fixture's path under testdata/frontmatter, without the
+# .md — "roundtrip/anchors", "read/bom".
+#
+# What "failing" means grows as P0.2 does. P0.2.1 asks only that a fixture read:
+# that its ranges account for every byte and its YAML parses. P0.2.3 adds the
+# write side to this same file — write(read(F)) byte-identical, and a
+# single-key edit that touches only that key's bytes.
+#
+# It is empty because every fixture reads. The 200 in roundtrip/ have not yet
+# been asked to write, because there is no writer.

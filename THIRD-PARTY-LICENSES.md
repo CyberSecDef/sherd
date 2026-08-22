@@ -12,6 +12,7 @@ adding or removing a dependency.
 | Component | License | Source |
 |---|---|---|
 | `github.com/yuin/goldmark` | MIT | https://github.com/yuin/goldmark/blob/v1.8.5/LICENSE |
+| `gopkg.in/yaml.v3` | MIT | https://github.com/go-yaml/yaml/blob/v3.0.1/LICENSE |
 
 ## Development-only tooling
 

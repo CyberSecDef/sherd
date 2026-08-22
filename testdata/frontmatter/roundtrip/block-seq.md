@@ -1,0 +1,6 @@
+---
+tags:
+  - alpha
+  - beta
+---
+body
