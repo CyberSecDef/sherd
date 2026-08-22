@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 The Sherd Authors
+
+# Fixtures are byte-exact. The conformance corpus asserts byte offsets into
+# input.md (FR-MD-003), so a checkout that rewrites LF to CRLF shifts every
+# range in every expected AST and the suite fails on Windows and nowhere else
+# — which is exactly how it was found. The same goes for the fuzz seed corpus,
+# where the input is the bytes.
+#
+# This also matters ahead of P0.2: the frontmatter round-trip fixtures are
+# asserted byte-for-byte, and preserving line endings is itself a requirement
+# there (FR-VLT-015).
+testdata/**            text eol=lf
+**/testdata/**         text eol=lf

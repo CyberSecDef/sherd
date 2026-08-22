@@ -76,6 +76,13 @@ func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 		if d.reachesBeyondItself(n) {
 			return nil, false
 		}
+		if n.Range.Len() == 0 {
+			// goldmark sometimes emits a block covering no bytes at all — an
+			// empty heading at the end of a document, say. Two blocks then
+			// share a boundary, an edit at that byte is inside both of them,
+			// and whichever one is reparsed leaves the other duplicated.
+			return nil, false
+		}
 	}
 	old := d.Root.Children[i]
 
