@@ -18,6 +18,10 @@ than repeated from scratch.
 | `gossan` | **Rejected** | An active software company named **Gossan Software** |
 | `argot` | **Rejected** | PyPI `argot` is *"argot text markup — a markdown dialect"* |
 | `origo` | **Rejected** | At least four software companies, plus a registered `ORIGO COMMAND` mark |
+| `graphene` | **Rejected** | `graphene-python`, 8.2k stars; PyPI, npm, crates.io, `.com` all taken |
+| `mindshare` | **Rejected** | Two registered `MINDSHARE` marks in software, one covering desktop software |
+| `onyxvault` | **Rejected** | Onyx is a YC-backed open-source enterprise search and knowledge-management platform; and the name reads as an Obsidian soundalike |
+| `cortexicon` | **Passes, with a reservation** | Clean everywhere checked; but contains `CORTEX`, a heavily-used software mark |
 
 ## Screening detail
 
@@ -69,6 +73,95 @@ Crowded with active software businesses, one of them large:
   and applications*. Open source, which is our own distribution channel.
 - **`ORIGO COMMAND`** — a trademark record exists (Trademarkia 85684482).
 - `origo.com` registered; npm taken; GitHub 211 stars.
+
+### `graphene` — rejected
+
+Occupied in every namespace checked, by prominent projects:
+
+- **`graphql-python/graphene`**, 8,235 stars — and PyPI `graphene` is
+  *"GraphQL Framework for Python"*. This is a widely-deployed developer library.
+- `graphql-python/graphene-django`, 4,392 stars; `jondot/graphene`, 2,853 stars.
+- npm `graphene`: taken. crates.io `graphene`: taken (graph theory library).
+- `graphene.com`: registered.
+- Separately, **GrapheneOS** is a well-known privacy-focused mobile OS, whose
+  audience overlaps heavily with a local-first, zero-telemetry tool's audience.
+
+Nothing here is marginal. The name is unavailable.
+
+### `mindshare` — rejected
+
+Package namespaces are clear — npm, PyPI, and crates.io are all free — but
+**registered trademarks in our own goods class are not**:
+
+- **Mindshare Technologies Inc.** holds a `MINDSHARE` mark for *"computer
+  software and computer application software for cell phones, smart phones,
+  tablets, **desktop devices**"*. That is a direct description of what Granite
+  is.
+- **Mindshare Media Worldwide Limited** holds a `MINDSHARE` mark filed in
+  November 1992 for *"computerized software programs relating to sales and
+  marketing"*.
+- **Mindshare** (WPP) is a global media agency founded in 1997, headquartered
+  in London — a large, well-funded brand.
+- **Mindshare Medical, Inc.** also holds marks.
+- `mindshare.com`: registered.
+
+A registered mark covering desktop software is disqualifying regardless of how
+free the package namespaces are. Secondary point: "mindshare" is ordinary
+business jargon, which makes it both weak as a distinctive mark and hopeless as
+a search term.
+
+### `onyxvault` — rejected, for two independent reasons
+
+**1. Domain adjacency.** **Onyx** (formerly Danswer) is a Y Combinator-backed,
+San Francisco company shipping an **open-source (MIT) enterprise search and AI
+knowledge-management platform**, covered by TechCrunch in March 2025 and
+competing with Glean. Open source, search, knowledge management — that is our
+field, not an adjacent one.
+
+**2. It reads as an Obsidian imitation, which `LEG-003` forbids outright.**
+This one needs no database:
+
+| | Obsidian | OnyxVault |
+|---|---|---|
+| Name | black volcanic glass | **onyx** — black gemstone |
+| Term for a notes directory | **vault** | **vault** |
+
+`LEG-003` prohibits "any existing product name, logo, wordmark, or
+**confusingly similar branding**", and states that trademark exposure "is not
+cured by clean-room process". A black-mineral name combined with Obsidian's own
+signature vocabulary, applied to an Obsidian alternative, is close to a textbook
+example. This is a worse position than `granite`, not a better one.
+
+Note that `vault` is also this specification's own defined term (§2) for a
+workspace root. Keeping the concept while not putting it in the product name is
+the right split.
+
+### `cortexicon` — passes, with one reservation
+
+The only candidate so far to survive. Everything checked is clear:
+
+- npm, PyPI, crates.io: **all free**.
+- GitHub: one dormant personal account (`cortexicon`, created 2018, a single
+  unstarred repo with no description). Not a project, not an organization.
+- `cortexicon.com`: registered but serving **HTTP 404** — parked, not in use as
+  a brand.
+- `cortexicon.dev`, `.app`, `.io`, `.md`: no nameserver records.
+- No company or product named Cortexicon found.
+
+**The reservation:** the name contains `CORTEX` in full as its prefix, and
+CORTEX is heavily used in software — Cortex.io (an internal developer portal
+whose customers include Dropbox, Adobe, and Grammarly), Palo Alto Networks'
+Cortex XDR, the CORTEX hyperautomation platform, and Grafana's Cortex. A holder
+of a strong CORTEX mark in class 9 could plausibly oppose CORTEXICON in the same
+class. Coined compounds are ordinarily strong marks, and a portmanteau of
+*cortex* + *lexicon* is genuinely distinctive — but this specific one is
+distinctive in a crowded neighbourhood, and that is a question for an attorney
+rather than for screening.
+
+**A non-legal observation, offered as opinion:** "cortex" signals brain and AI.
+Granite is a local-first tool with zero telemetry and no AI features, so the
+name may set an expectation the product deliberately does not meet. Twelve
+letters is also long for something typed as a command.
 
 ## Not yet screened
 
