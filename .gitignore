@@ -15,3 +15,6 @@
 *.swp
 .idea/
 .vscode/
+
+# Spike build artifacts
+spikes/**/go.sum.bak
