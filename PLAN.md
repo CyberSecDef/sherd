@@ -1,9 +1,9 @@
 # Granite — Implementation Plan
 
-**Companion document to:** `REQUIREMENT_SPEC.md` (v1.0)
-**Plan version:** 1.0
+**Companion document to:** `REQUIREMENT_SPEC.md` (v1.1)
+**Plan version:** 1.1
 **Status:** Ready for execution
-**Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §12 for the traceability matrix.
+**Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §12 for the traceability matrix. Updated for spec v1.1 (`NFR-PERF-011`, `FR-SRCH-014`, `FR-SRCH-015`).
 
 ---
 
@@ -248,8 +248,10 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - In-memory adjacency lists for the link graph, rebuilt from SQLite on load.
 - Granular change events emitted: `file.created`, `file.modified`, `file.renamed`, `file.deleted`, `metadata.changed`, `index.progress`.
 - Crash safety: deleting `index.db` loses nothing.
-- **Covers:** `FR-IDX-001`…`FR-IDX-005`, `FR-IDX-010`…`FR-IDX-013`, `NFR-REL-005`, `NFR-PERF-003`, `NFR-PERF-010`, `FR-MOB-003`.
-- **Done when:** single-note incremental reindex ≤ 15 ms p95; index ≤ 25% of vault text size; `kill -9` mid-index leaves a valid partial index that resumes.
+- **Index layout for the size budget (`NFR-PERF-010`, amended in spec v1.1):** body text is indexed without positional data; path, title, aliases, and headings are indexed with positions. Per-component size is measured and reported (`NFR-PERF-011`).
+- **Re-measure the budget on a realistic prose corpus first.** The spike figures that drove the amendment came from a synthetic vocabulary and overstate index size; the budgets are provisional until this is done (ADR 0002, spec Appendix B).
+- **Covers:** `FR-IDX-001`…`FR-IDX-005`, `FR-IDX-010`…`FR-IDX-013`, `NFR-REL-005`, `NFR-PERF-003`, `NFR-PERF-010`, `NFR-PERF-011`, `FR-MOB-003`.
+- **Done when:** single-note incremental reindex ≤ 15 ms p95; total index ≤ 40% and positional component ≤ 10% of vault text size, both reported per component; `kill -9` mid-index leaves a valid partial index that resumes.
 
 ### P0.8 `internal/index` — link resolution
 - Resolution order: exact vault-root path → exact note-relative path → unique basename → alias → unresolved.
@@ -270,8 +272,9 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Planner that pushes predicates into index-backed SQL rather than scanning where possible.
 - Ranked results (BM25 + title/alias boost + recency tiebreak), grouped by file, snippets with highlights, match counts, expandable.
 - Cancelable, streaming, first-page-fast.
-- **Covers:** `FR-SRCH-001`…`FR-SRCH-010`, `QA-004`.
-- **Done when:** full-text query on the 20k reference vault returns the first page ≤ 200 ms p95; the parser survives 24 h fuzz; every EBNF production has a test.
+- **Phrase verification (`FR-SRCH-014`, `FR-SRCH-015`):** the index proposes candidates, the source file's bytes decide. Every phrase match is confirmed by reading the file — which the snippet path already requires — before it is reported. Candidate walking is driven by the rarest term; counts stream progressively; any cost cap is visibly marked, never silent.
+- **Covers:** `FR-SRCH-001`…`FR-SRCH-010`, `FR-SRCH-014`, `FR-SRCH-015`, `QA-004`.
+- **Done when:** full-text query on the 20k reference vault returns the first page ≤ 200 ms p95; a phrase whose terms are individually common but rarely adjacent returns only verified matches, streamed; the parser survives 24 h fuzz; every EBNF production has a test.
 
 ### P0.10 `cmd/granite` — CLI skeleton (standalone mode)
 - Cobra-style command tree, `--standalone` operating directly on a vault (daemon comes in P1).
@@ -411,7 +414,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 
 ### P1.12 Observability
 - `granite doctor` completed: index integrity, watcher health, inotify limits, permissions, config validity, disk space, clock skew, with actionable remedies.
-- In-app diagnostics panel: index stats, memory, open handles, slow-query log.
+- In-app diagnostics panel: index stats (including per-component index size, `NFR-PERF-011`), memory, open handles, slow-query log.
 - `pprof` behind an explicit flag, loopback only.
 - Crash reports written locally; any upload opt-in per report with a full preview.
 - **Covers:** `FR-OBS-002`, `FR-OBS-003`, `FR-OBS-004`, `FR-OBS-005`.
@@ -844,6 +847,7 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 | NFR-PERF-003 | P0.7 | | NFR-PERF-008 | P2.1 |
 | NFR-PERF-004 | P1.9 | | NFR-PERF-009 | P1.5 |
 | NFR-PERF-005 | P0.9 | | NFR-PERF-010 | P0.7 |
+| | | | NFR-PERF-011 | P0.7, P1.12 |
 
 ### Non-functional — reliability, platform, a11y, i18n, security
 | ID | Step | | ID | Step |
@@ -895,6 +899,7 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 | FR-LNK-006 | P1.7 | | FR-IDX-010 … 013 | P0.7 |
 | FR-LNK-007, 008 | P0.8 (UI half P1.10) | | FR-SRCH-001 … 010 | P0.9 |
 | FR-LNK-009 | P1.7 | | FR-SRCH-011 … 013 | P2.4 |
+| | | | FR-SRCH-014, 015 | P0.9 |
 | FR-LNK-010 | P1.4 | | | |
 
 ### Bases, graph, canvas

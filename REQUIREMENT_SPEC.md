@@ -3,7 +3,7 @@
 **Codename:** `granite` (placeholder — do not ship under any name resembling an existing trademark)
 **Target language:** Go 1.23+
 **Target license:** GPL-3.0-or-later
-**Document version:** 1.0
+**Document version:** 1.1 (see Appendix B for the change log)
 **Status:** Draft for implementation handoff
 **Audience:** Implementing engineer / agentic coding session
 
@@ -86,7 +86,8 @@ A local-first, plain-text personal knowledge management application: Markdown ed
 | NFR-PERF-007 | Idle RSS with 5 open panes: ≤ 400 MB. Idle CPU: < 0.5% of one core. |
 | NFR-PERF-008 | Graph view: ≥ 30 fps interactive pan/zoom at 5,000 visible nodes; degrade gracefully with node capping and LOD above that. |
 | NFR-PERF-009 | Editor MUST use virtualized rendering; memory MUST NOT scale with note length beyond the document buffer itself. |
-| NFR-PERF-010 | Index database size SHOULD NOT exceed 25% of vault text size. |
+| NFR-PERF-010 | Index database size budget, measured against vault text size. **Total index SHOULD NOT exceed 40%.** The **positional (phrase-capable) component SHOULD NOT exceed 10%**, because that component is what grows fastest with vocabulary and is the part a mobile client (§22) and a sync transfer can least afford. A build that exceeds either figure MUST report it in `granite doctor` rather than fail. *Superseded the original flat 25% figure in v1.1; see Appendix B and ADR 0002.* |
+| NFR-PERF-011 | Index size MUST be measurable and reportable per component (positional, non-positional, structured tables) so that a regression is attributable rather than merely visible. `granite doctor` and the diagnostics panel (FR-OBS-003) MUST both surface it. |
 
 ### 3.2 Reliability & data safety
 
@@ -498,6 +499,8 @@ CREATE VIRTUAL TABLE search USING fts5(
 | FR-SRCH-011 | Saved searches: persistable, nameable, bookmarkable, embeddable in notes as a query code fence. |
 | FR-SRCH-012 | Search-and-replace across the vault: preview-first, per-match toggles, atomic transactional apply, single undo. Regex capture-group substitution (`$1`). This MUST be a first-class feature — it is a notable gap in the reference product. |
 | FR-SRCH-013 | The full DSL MUST be exposed via CLI and IPC with identical semantics and a machine-readable (JSON) result form. |
+| FR-SRCH-014 | **Phrase correctness MUST be a property of the algorithm, not of the index configuration.** A phrase match MUST be confirmed against the source file's bytes before it is reported. The index MAY return a superset of candidates; reporting an unverified candidate as a match is a defect. This decouples FR-SRCH-002 from any particular tokenizer or positional-index setting, and costs nothing on the critical path because contentless FTS5 (FR-IDX-010) already requires reading the source file to produce a snippet (FR-SRCH-009). |
+| FR-SRCH-015 | Where a phrase query's candidate set is large, verification MUST be driven by the rarest term's posting list, MUST stream verified matches as they are confirmed (FR-SRCH-010), and MUST report match counts progressively (`50+`) rather than blocking on an exact total. If verification is capped for cost, the result set MUST be visibly marked as incomplete — never silently truncated (§1.3.6). |
 
 ### 9.2 Query grammar (EBNF, normative)
 
@@ -1033,3 +1036,25 @@ granite doctor            # diagnose index, permissions, watchers, config
 5. Build the §9 query parser against the EBNF, fuzz it, and ship `granite search`.
 
 At that point you have a useful tool with zero UI, and every subsequent layer is additive.
+
+---
+
+## Appendix B — Change log
+
+### v1.1 — 2026-08-21
+
+Amendments arising from the phase P-1.3 decision spikes. Each is traceable to
+measured evidence in `spikes/` and to an ADR in `docs/adr/`.
+
+| Change | Requirement | Reason |
+|---|---|---|
+| Amended | `NFR-PERF-010` | The original flat 25% index budget is unachievable alongside `FR-SRCH-002` phrase search. Measured: SQLite FTS5 at `detail=full` produced an index 93% of text size; `detail=column` 53%; `detail=none` 32% — and both reduced settings break phrase queries outright. Replaced with a per-component budget that constrains the expensive part (positional data) tightly and the whole index loosely. See ADR 0002. |
+| Added | `NFR-PERF-011` | A per-component budget is only enforceable if size is measurable per component. |
+| Added | `FR-SRCH-014` | Resolves the conflict above by moving phrase correctness out of the index and into the query algorithm: the index proposes, the file's bytes decide. |
+| Added | `FR-SRCH-015` | Bounds the cost of that verification, and requires that any cap be visible rather than silent — §1.3.6. |
+
+**Note on the measurement.** The 93% figure came from a synthetic corpus whose
+vocabulary inflates the term dictionary relative to real prose. The true figure
+for natural-language notes is expected to be lower, and P0.7 MUST re-measure on
+a realistic corpus before the budgets in `NFR-PERF-010` are treated as final.
+The direction of the finding is not in doubt; the exact numbers are.
