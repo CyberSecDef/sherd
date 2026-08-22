@@ -69,11 +69,21 @@ if [[ "${1:-}" == "--self-test" ]]; then
 	exit $?
 fi
 
-# Everything except internal/vault (which owns writes), tests (which write to
-# t.TempDir, outside any vault), and spikes/ (a separate module that never ships).
+# Exemptions, each deliberate:
+#
+#   internal/vault  owns writes to user data; that is the rule's whole point.
+#   internal/obs    writes the application's own log file, which is application
+#                   state under the OS config dir, never inside a vault and
+#                   never note content. It is exempt because routing a log
+#                   write through the vault layer would be nonsense: the log
+#                   must work before a vault is open, and during a vault
+#                   failure. See FR-OBS-001 and internal/obs/rotate.go.
+#   *_test.go       tests write to t.TempDir, outside any vault.
+#   spikes/         a separate module that never ships.
 files="$(find . -name '*.go' \
 	-not -path './.git/*' \
 	-not -path './internal/vault/*' \
+	-not -path './internal/obs/*' \
 	-not -path './spikes/*' \
 	-not -name '*_test.go' \
 	| LC_ALL=C sort)"

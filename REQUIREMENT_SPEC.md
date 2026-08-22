@@ -3,7 +3,7 @@
 **Name:** `sherd` (chosen 2026-08-21; see ADR 0008. Preliminary screening only — `LEG-003` still requires a legal clearance before public release)
 **Target language:** Go 1.23+
 **Target license:** GPL-3.0-or-later
-**Document version:** 1.2 (see Appendix B for the change log)
+**Document version:** 1.4 (see Appendix B for the change log)
 **Status:** Draft for implementation handoff
 **Audience:** Implementing engineer / agentic coding session
 
@@ -225,6 +225,7 @@ sherd/
 │   ├── sync/             # CRDT, chunk store, E2EE, transport
 │   ├── publish/          # static export
 │   ├── rpc/              # JSON-RPC server, schema, codegen
+│   ├── obs/              # logging, redaction, diagnostics (added v1.4)
 │   └── config/           # settings model, migration
 ├── pkg/
 │   ├── format/           # PUBLIC: parsers/writers for .md, .canvas, .base
@@ -1040,6 +1041,23 @@ At that point you have a useful tool with zero UI, and every subsequent layer is
 ---
 
 ## Appendix B — Change log
+
+### v1.4 — 2026-08-21
+
+| Change | Requirement | Reason |
+|---|---|---|
+| Amended | §4.3 module layout | Added `internal/obs/`. `FR-OBS-001`…`FR-OBS-005` mandate structured logging, `doctor` checks, a diagnostics panel, `pprof`, and crash reports, and the layout gave none of them a home. Recorded here rather than letting the tree drift from the code. |
+
+Implemented in P-1.5: `internal/obs` provides `log/slog` with level-aware
+redaction and a hand-rolled rotating file sink. Rotation was written in-repo
+rather than taken from a dependency, keeping the core at zero third-party
+modules; see that phase's commit for the trade-off.
+
+`docs/THREAT-MODEL.md` (`NFR-SEC-007`) is now a first draft. It identifies six
+gaps where a threat has no corresponding requirement — YAML expansion bounds,
+importer archive bounds, sync traffic analysis, sync freshness, shared-screen
+privacy, and snapshot confidentiality. These are candidate requirements, listed
+in that document's §8, not yet adopted here.
 
 ### v1.2 — 2026-08-21
 

@@ -1,7 +1,7 @@
 # Sherd — Implementation Plan
 
-**Companion document to:** `REQUIREMENT_SPEC.md` (v1.1)
-**Plan version:** 1.3
+**Companion document to:** `REQUIREMENT_SPEC.md` (v1.4)
+**Plan version:** 1.4
 **Status:** Ready for execution
 **Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §12 for the traceability matrix. Updated for spec v1.1 (`NFR-PERF-011`, `FR-SRCH-014`, `FR-SRCH-015`).
 
@@ -160,6 +160,7 @@ Run these in parallel; none may slip past its box.
 - `log/slog` setup with rotating local file sink and the content/path redaction rule.
 - **Covers:** `NFR-SEC-007`, `FR-OBS-001`.
 - **Done when:** logs at INFO and above contain no note content or file paths, asserted by a test.
+- *Delivered in `internal/obs` (spec §4.3 amended in v1.4 to add the package). Rotation hand-rolled rather than taken from a dependency, keeping the core at zero third-party modules. The threat model identified six specification gaps — see `docs/THREAT-MODEL.md` §8 — which are candidate requirements, not yet adopted.*
 
 **Phase gate P-1:** all ADRs merged; CI red on every deliberate violation; corpus harness runs.
 

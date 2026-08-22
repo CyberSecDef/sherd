@@ -26,6 +26,9 @@ components:
   # ---- Binaries. May wire anything together. ----
   cmd:         { in: cmd/** }
 
+  # ---- Observability. Depended on by everything; depends on nothing. ----
+  obs: { in: internal/obs/** }
+
   # ---- Test harness. Reads the corpus, depends on nothing. ----
   conformance: { in: internal/conformance/** }
 
@@ -57,6 +60,7 @@ deps:
   # Binaries wire the application together, so they may reach anywhere.
   cmd:
     mayDependOn:
+      - obs
       - format
       - pluginsdk
       - vault
@@ -87,32 +91,38 @@ deps:
   conformance:
     anyVendorDeps: true
 
+  # obs sits at the bottom of the graph: any package may log, so obs must not
+  # depend on any of them or a cycle is guaranteed (ARC-MOD-002).
+  obs:
+    anyVendorDeps: true
+
   vault:
-    mayDependOn: [format, config]
+    mayDependOn: [obs, format, config]
   mdast:
-    mayDependOn: [format]
+    mayDependOn: [obs, format]
   index:
-    mayDependOn: [format, mdast, vault, config]
+    mayDependOn: [obs, format, mdast, vault, config]
   graph:
-    mayDependOn: [format, index]
+    mayDependOn: [obs, format, index]
   query:
-    mayDependOn: [format, index, mdast]
+    mayDependOn: [obs, format, index, mdast]
   bases:
-    mayDependOn: [format, index, query, vault]
+    mayDependOn: [obs, format, index, query, vault]
   canvas:
-    mayDependOn: [format, vault]
+    mayDependOn: [obs, format, vault]
   workspace:
-    mayDependOn: [config]
+    mayDependOn: [obs, config]
   command:
-    mayDependOn: [config]
+    mayDependOn: [obs, config]
   plugin:
-    mayDependOn: [format, pluginsdk, vault, index, query, command, config]
+    mayDependOn: [obs, format, pluginsdk, vault, index, query, command, config]
   sync:
-    mayDependOn: [format, vault, index, config]
+    mayDependOn: [obs, format, vault, index, config]
   publish:
-    mayDependOn: [format, mdast, index, query, vault, config]
+    mayDependOn: [obs, format, mdast, index, query, vault, config]
   rpc:
     mayDependOn:
+      - obs
       - format
       - vault
       - mdast
