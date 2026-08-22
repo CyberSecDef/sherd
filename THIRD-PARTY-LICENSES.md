@@ -9,11 +9,9 @@ adding or removing a dependency.
 
 ## Components
 
-_None._
-
-Sherd currently has no third-party dependencies. This is the desired steady
-state for the core: prefer the standard library, and add a dependency only when
-it earns its place (see CONTRIBUTING.md §5).
+| Component | License | Source |
+|---|---|---|
+| `github.com/yuin/goldmark` | MIT | https://github.com/yuin/goldmark/blob/v1.8.5/LICENSE |
 
 ## Development-only tooling
 

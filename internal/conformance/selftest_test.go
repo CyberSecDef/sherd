@@ -90,7 +90,7 @@ func TestCompareDetectsEachComparison(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			report := compare(fixedParser{tc.result}, tc.c)
+			_, report, _ := compare(fixedParser{tc.result}, tc.c)
 			if report == "" {
 				t.Fatalf("no failure reported; the harness would pass a wrong parser")
 			}
@@ -106,8 +106,33 @@ func TestCompareIgnoresUnassertedOutputs(t *testing.T) {
 	// produced an AST. Absent expectations assert nothing.
 	c := Case{Source: []byte("x\n"), HTML: str("<p>x</p>\n")}
 	r := Result{HTML: str("<p>x</p>\n"), AST: &Node{Type: "document", Range: &Range{0, 2}}}
-	if report := compare(fixedParser{r}, c); report != "" {
+	if result, report, _ := compare(fixedParser{r}, c); report != "" || result != outcomePass {
 		t.Errorf("unasserted output caused a failure:\n%s", report)
+	}
+}
+
+// TestCompareSkipsWhenNothingIsComparable is a regression test (QA-012). The
+// harness originally treated "the parser produced none of the outputs this
+// case asserts" as a pass, so the first parser registered — HTML only — scored
+// 667/667 against a corpus in which 15 cases assert metadata or an AST and
+// nothing else. A suite that reports success for work it did not do is worse
+// than no suite, because it is believed.
+func TestCompareSkipsWhenNothingIsComparable(t *testing.T) {
+	c := Case{
+		Source:   []byte("#tag\n"),
+		Metadata: &Metadata{Tags: []Tag{{Tag: "tag", Source: "inline"}}},
+	}
+	htmlOnly := Result{HTML: str("<p>#tag</p>\n")}
+
+	result, report, unanswered := compare(fixedParser{htmlOnly}, c)
+	if result != outcomeSkip {
+		t.Errorf("outcome = %v, want outcomeSkip: nothing was compared, so the case cannot have passed", result)
+	}
+	if report != "" {
+		t.Errorf("skipped case produced a failure report: %s", report)
+	}
+	if len(unanswered) != 1 || unanswered[0] != "metadata" {
+		t.Errorf("unanswered = %v, want [metadata]; the summary has to be able to say what went untested", unanswered)
 	}
 }
 

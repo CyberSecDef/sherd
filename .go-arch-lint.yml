@@ -15,6 +15,16 @@ workdir: .
 exclude:
   - spikes
 
+# The one sanctioned exception. internal/conformance must not depend on the
+# parser it tests, which is why the conformance component has no project deps
+# — but something has to wire pkg/format into the harness, and Go's global
+# registry only works if the registration is compiled into the harness's own
+# test binary. That single file is excused here rather than excusing every
+# test file in the repository, which would take ARC-MOD-002 enforcement with
+# it. The exception is one file wide and named in full on purpose.
+excludeFiles:
+  - "internal/conformance/register_test.go"
+
 allow:
   depOnAnyVendor: false
 

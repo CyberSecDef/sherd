@@ -98,61 +98,127 @@ func runAgainst(t *testing.T, p Parser) {
 		t.Fatalf("loading expected-failures.txt: %v", err)
 	}
 
-	failed := map[string]bool{}
-	var pass, pending int
+	// A case that failed, is pending, or was skipped has not been shown to
+	// pass, and must not be delisted from the ratchet on the strength of a
+	// comparison that never ran.
+	notShownToPass := map[string]bool{}
+	unanswered := map[string]int{}
+	var pass, pending, skipped int
 
 	for _, c := range cases {
-		report := compare(p, c)
+		result, report, missing := compare(p, c)
+		for _, kind := range missing {
+			unanswered[kind]++
+		}
 		switch {
-		case report == "":
+		case result == outcomeSkip:
+			skipped++
+			notShownToPass[c.ID] = true
+		case result == outcomePass:
 			pass++
 		case ef.Has(c.ID):
-			failed[c.ID] = true
+			notShownToPass[c.ID] = true
 			pending++
 		default:
-			failed[c.ID] = true
+			notShownToPass[c.ID] = true
 			t.Errorf("%s\n%s", c.ID, indent(report))
 		}
 	}
 
-	t.Logf("pass %d   pending %d   total %d", pass, pending, len(cases))
+	t.Logf("pass %d   pending %d   skipped %d   total %d", pass, pending, skipped, len(cases))
+	for _, kind := range sortedKeys(unanswered) {
+		t.Logf("%d case(s) assert %s and the parser produces none", unanswered[kind], kind)
+	}
 
 	// The ratchet: a listed case that no longer fails must be delisted.
-	if stale := ef.Unexpected(failed); len(stale) > 0 {
+	if stale := ef.Unexpected(notShownToPass); len(stale) > 0 {
 		t.Errorf("%d case(s) listed in expected-failures.txt now pass — delete these lines:\n  %s",
 			len(stale), joinLines(stale))
 	}
 }
 
-// compare returns "" when the case passes, or a legible report of the first
-// comparison that failed.
-func compare(p Parser, c Case) string {
+// outcome is what running one case produced.
+type outcome int
+
+const (
+	outcomePass outcome = iota
+	outcomeFail
+	// outcomeSkip means the parser produced none of the outputs the case
+	// asserts, so nothing was compared. That is not a pass. Counting it as one
+	// is how a suite reports 100% while checking a fraction of itself, which is
+	// exactly what it did the first time a parser was registered: 14 metadata
+	// cases and 1 AST case scored green against a parser that emitted only HTML.
+	outcomeSkip
+)
+
+// compare runs every comparison the case asserts and the parser can answer,
+// returning a legible report of the first that failed.
+//
+// unanswered lists the assertions the case made that the parser had no output
+// for, so the summary can say what is going untested rather than leaving the
+// reader to infer it from a total that looks complete.
+func compare(p Parser, c Case) (outcome, string, []string) {
 	got, err := p.Parse(c.Source, Options{Flavor: c.Flavor})
 	if err != nil {
-		return "parse error: " + err.Error()
+		return outcomeFail, "parse error: " + err.Error(), nil
 	}
 	if got == nil {
-		return "parser returned nil result"
+		return outcomeFail, "parser returned nil result", nil
 	}
-	if c.HTML != nil && got.HTML != nil {
-		if d := diffText("HTML", *c.HTML, *got.HTML); d != "" {
-			return d
+
+	var unanswered []string
+	compared := 0
+
+	if c.HTML != nil {
+		switch {
+		case got.HTML == nil:
+			unanswered = append(unanswered, "HTML")
+		default:
+			compared++
+			if d := diffText("HTML", *c.HTML, *got.HTML); d != "" {
+				return outcomeFail, d, unanswered
+			}
 		}
 	}
-	if c.AST != nil && got.AST != nil {
-		if err := ValidateAST(got.AST, len(c.Source)); err != nil {
-			return "produced AST is invalid: " + err.Error()
-		}
-		if d := diffJSON("AST", c.AST, got.AST); d != "" {
-			return d
+	if c.AST != nil {
+		switch {
+		case got.AST == nil:
+			unanswered = append(unanswered, "AST")
+		default:
+			compared++
+			if err := ValidateAST(got.AST, len(c.Source)); err != nil {
+				return outcomeFail, "produced AST is invalid: " + err.Error(), unanswered
+			}
+			if d := diffJSON("AST", c.AST, got.AST); d != "" {
+				return outcomeFail, d, unanswered
+			}
 		}
 	}
-	if c.Metadata != nil && got.Metadata != nil {
-		if d := diffJSON("metadata", c.Metadata, got.Metadata); d != "" {
-			return d
+	if c.Metadata != nil {
+		switch {
+		case got.Metadata == nil:
+			unanswered = append(unanswered, "metadata")
+		default:
+			compared++
+			if d := diffJSON("metadata", c.Metadata, got.Metadata); d != "" {
+				return outcomeFail, d, unanswered
+			}
 		}
 	}
-	return ""
+
+	if compared == 0 {
+		return outcomeSkip, "", unanswered
+	}
+	return outcomePass, "", unanswered
+}
+
+func sortedKeys(m map[string]int) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func indent(s string) string {
