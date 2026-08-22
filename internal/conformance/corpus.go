@@ -25,6 +25,7 @@ type Case struct {
 	AST      *Node
 	Metadata *Metadata
 	Origin   string // "commonmark" (vendored) or "sherd" (hand-written)
+	Flavor   Flavor // which dialect this case asserts
 }
 
 // Load reads every case: the vendored CommonMark suite plus the hand-written
@@ -85,6 +86,7 @@ func loadCommonMark(fsys fs.FS, name string) ([]Case, error) {
 			Source: []byte(c.Markdown),
 			HTML:   &html,
 			Origin: "commonmark",
+			Flavor: FlavorCommonMark,
 		})
 	}
 	return out, nil
@@ -103,7 +105,7 @@ func loadSherd(fsys fs.FS, dir string) ([]Case, error) {
 			return nil
 		}
 		caseDir := path.Dir(p)
-		c := Case{ID: caseDir, Origin: "sherd"}
+		c := Case{ID: caseDir, Origin: "sherd", Flavor: FlavorSherd}
 		if c.Source, err = fs.ReadFile(fsys, p); err != nil {
 			return err
 		}

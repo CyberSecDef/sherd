@@ -127,7 +127,7 @@ func runAgainst(t *testing.T, p Parser) {
 // compare returns "" when the case passes, or a legible report of the first
 // comparison that failed.
 func compare(p Parser, c Case) string {
-	got, err := p.Parse(c.Source)
+	got, err := p.Parse(c.Source, Options{Flavor: c.Flavor})
 	if err != nil {
 		return "parse error: " + err.Error()
 	}

@@ -131,7 +131,7 @@ Rule 9 stands, plus the spec's gates, which are not negotiable:
 
 - `QA-012`: every bug fix lands with a regression test that **fails before the fix**. Write the failing test first; show it failing.
 - `QA-002`: the conformance corpus grows with every parser change, in the same commit.
-- `QA-001`: ≥ 80% on `internal/`, ≥ 95% on `internal/mdast`, `internal/index`, `internal/vault`, `internal/sync`.
+- `QA-001`: ≥ 80% on `internal/`, ≥ 95% on `pkg/format`, `internal/index`, `internal/vault`, `internal/sync`.
 - `QA-003`: round-trip pairs get property tests, not example tests.
 - A step is not done until its "Done when" line in `PLAN.md` is demonstrably true. Quote the evidence.
 

@@ -15,7 +15,7 @@ import (
 
 type fixedParser struct{ r Result }
 
-func (p fixedParser) Parse([]byte) (*Result, error) { return &p.r, nil }
+func (p fixedParser) Parse([]byte, Options) (*Result, error) { return &p.r, nil }
 
 func str(s string) *string { return &s }
 

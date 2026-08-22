@@ -31,6 +31,24 @@ metadata.json     optional — expected extracted metadata
 A case runs whichever comparisons it provides. Omitting a file means "not
 asserted here", never "no expectation".
 
+## Flavours
+
+Every case carries a flavour, derived from its source: vendored CommonMark
+cases are `commonmark`, Sherd cases are `sherd`. The harness passes it to the
+parser as `conformance.Options{Flavor: …}`.
+
+The two flavours disagree on purpose. Sherd's dialect is CommonMark plus GFM
+plus the extended syntax in specification section 6.2, and some of those
+extensions change how a plain CommonMark document renders — GFM autolinking
+turns a bare address into a link where CommonMark leaves it as text. Asking one
+parser configuration to satisfy both suites would mean either weakening the
+dialect or permanently excusing spec cases in the ratchet, and the ratchet is
+supposed to reach zero.
+
+So `FR-MD-001`'s "CommonMark suite at 100%" is a claim about the core, checked
+in `commonmark` flavour, and the extensions are checked in `sherd` flavour.
+Keeping a strict mode in `pkg/format` is what makes the first claim testable.
+
 ## `ast.json`
 
 ```jsonc
