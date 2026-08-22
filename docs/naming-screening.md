@@ -26,6 +26,8 @@ than repeated from scratch.
 | `notehive` | **Rejected** | Live note-taking products on the App Store, Google Play, `notehive.net` and `notehive.app` |
 | `noteforge` | **Rejected** | Live products on Google Play and `noteforge.dev`, the latter a dev note-linking tool |
 | `jama` | **Rejected** | Jama Software's registered `JAMA CONNECT` mark covers downloadable document-management software; plus the AMA's JAMA journal |
+| `yame` | **Rejected** | crates.io `yame` is an actively maintained *"lightweight terminal Markdown editor"* |
+| `yamed` | **Available but weak** | Namespaces clear; but reads as "Y-A-Med", and the "Yet Another" framing undersells the product |
 
 ## Screening detail
 
@@ -247,6 +249,52 @@ precedent in exactly this project's tradition — GNU, YAML, PHP, WINE, LAME —
 and suit a GPL tool with an opinionated posture. The requirement is only that
 the resulting letters be an uncrowded string and the expansion describe what the
 thing actually does.
+
+### `yame` / `yamed` — "Yet Another Markdown Editor"
+
+**`yame` is rejected on a direct collision.** crates.io `yame` is *"A lightweight
+terminal Markdown editor"* — v1.1.0, last updated 2026-06-25, actively
+maintained at `github.com/cyrusae/yame`. Same category, same name, shipping now.
+This is the same failure mode that killed `argot`: not a company, but an
+existing tool doing our thing under our name.
+
+Also: npm `yame` is held (a dead v0.0.0 placeholder from 2017), `yame.com` has
+been registered since 1998, `yame.app` since 2024-12-05, and GitHub returns
+1,620 matching repositories.
+
+**`yamed` is technically available** — npm, PyPI, and crates.io are all free,
+`yamed.dev` is unregistered, and GitHub shows only 31 loosely-matching repos. It
+is also awkward: it reads as "Y-A-Med" and carries a medical connotation that
+has nothing to do with the product.
+
+### The framing problem, which outlives either spelling
+
+"Yet another markdown editor" is a poor description of what the specification
+actually mandates, and a worse pitch.
+
+§1.1 scopes this as Markdown editing **plus** bidirectional linking, metadata
+indexing, full-text and structured query, graph visualization, spatial canvas,
+property-driven database views, a plugin system, a scriptable CLI, an
+end-to-end-encrypted sync service, and static-site export. "Markdown editor"
+covers the first item on that list.
+
+More pointedly, the specification names its own differentiators, and a
+self-deprecating name discards each of them at first contact:
+
+| Requirement | What it claims |
+|---|---|
+| `FR-SYN-001` | Self-hostable, protocol-documented sync is *"the project's strongest advantage"* |
+| `FR-SRCH-012` | Vault-wide search-and-replace is *"a notable gap in the reference product"* |
+| `FR-PLG-012` | The capability-usage log is *"a genuine differentiator over the reference product's all-or-nothing trust model"* |
+
+**The cautionary precedent comes from inside the tradition being invoked.** YAML
+originally expanded to "Yet Another Markup Language" and **changed** to "YAML
+Ain't Markup Language" once the modest framing stopped fitting what it had
+become. YACC and YAML earned their self-deprecation by being genuinely small
+tools; this project is not one, and would be renaming itself twice.
+
+Practical footnote: "yet another X" is close to unsearchable, and it dates a
+project to the era in which it was named.
 
 ## Not yet screened
 
