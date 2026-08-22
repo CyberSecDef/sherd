@@ -79,6 +79,10 @@ analytics: ## Fail if any analytics or telemetry package is linked in (NFR-SEC-0
 vault-writes: ## Fail on direct filesystem writes outside internal/vault (ARC-MOD-003)
 	@./scripts/check-vault-writes.sh
 
+.PHONY: conformance
+conformance: ## Run the golden-file Markdown corpus (QA-002)
+	$(GO) test ./internal/conformance/... -v
+
 .PHONY: self-test
 self-test: ## Prove the CI guards actually fire (see testdata/ci/)
 	@./scripts/check-analytics.sh --self-test

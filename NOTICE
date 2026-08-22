@@ -31,6 +31,12 @@ Documents
 CODE_OF_CONDUCT.md is adapted from the Contributor Covenant v2.1
 (https://www.contributor-covenant.org), used under CC BY 4.0.
 
+testdata/conformance/commonmark/spec.json is the CommonMark 0.31.2 conformance
+suite, Copyright (C) 2014-2016 John MacFarlane, used unmodified under the
+Creative Commons CC-BY-SA 4.0 license
+(https://creativecommons.org/licenses/by-sa/4.0/), which is one-way compatible
+with GPL-3.0. See testdata/conformance/commonmark/PROVENANCE.md.
+
 --------------------------------------------------------------------------------
 Provenance
 --------------------------------------------------------------------------------

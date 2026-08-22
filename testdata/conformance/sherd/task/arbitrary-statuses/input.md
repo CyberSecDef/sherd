@@ -1,0 +1,4 @@
+- [ ] todo item
+- [x] done item
+- [/] in progress
+- [>] deferred

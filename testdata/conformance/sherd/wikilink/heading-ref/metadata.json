@@ -1,0 +1,14 @@
+{
+  "links": [
+    {
+      "target": "Other Note",
+      "subpath": "#Some Heading",
+      "kind": "wiki",
+      "range": [
+        4,
+        31
+      ],
+      "line": 1
+    }
+  ]
+}

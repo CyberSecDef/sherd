@@ -1,0 +1,13 @@
+{
+  "links": [
+    {
+      "target": "Other Note",
+      "kind": "wiki",
+      "range": [
+        10,
+        24
+      ],
+      "line": 1
+    }
+  ]
+}

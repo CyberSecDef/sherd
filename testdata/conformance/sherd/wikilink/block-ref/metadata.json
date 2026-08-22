@@ -1,0 +1,14 @@
+{
+  "links": [
+    {
+      "target": "Other Note",
+      "subpath": "#^abc123",
+      "kind": "wiki",
+      "range": [
+        4,
+        26
+      ],
+      "line": 1
+    }
+  ]
+}

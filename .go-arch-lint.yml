@@ -26,6 +26,9 @@ components:
   # ---- Binaries. May wire anything together. ----
   cmd:         { in: cmd/** }
 
+  # ---- Test harness. Reads the corpus, depends on nothing. ----
+  conformance: { in: internal/conformance/** }
+
   # ---- Implementation packages. ----
   vault:       { in: internal/vault/** }
   mdast:       { in: internal/mdast/** }
@@ -78,6 +81,11 @@ deps:
   # ARC-MOD-003: internal/vault is the only package that writes user data. That
   # rule is about filesystem calls rather than imports, so it is enforced
   # separately by scripts/check-vault-writes.sh.
+
+  # The conformance harness must not depend on the parser it tests: P0.1 wires
+  # pkg/format in via conformance.Register, so the dependency runs the other way.
+  conformance:
+    anyVendorDeps: true
 
   vault:
     mayDependOn: [format, config]

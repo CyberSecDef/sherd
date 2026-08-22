@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "key": "title",
+      "type": "text",
+      "value": "Hello"
+    },
+    {
+      "key": "draft",
+      "type": "text",
+      "value": "no"
+    },
+    {
+      "key": "count",
+      "type": "number",
+      "value": 3
+    }
+  ]
+}

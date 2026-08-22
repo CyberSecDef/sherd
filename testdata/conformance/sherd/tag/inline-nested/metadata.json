@@ -1,0 +1,22 @@
+{
+  "tags": [
+    {
+      "tag": "project/alpha",
+      "source": "inline",
+      "range": [
+        7,
+        21
+      ],
+      "line": 1
+    },
+    {
+      "tag": "done",
+      "source": "inline",
+      "range": [
+        26,
+        31
+      ],
+      "line": 1
+    }
+  ]
+}

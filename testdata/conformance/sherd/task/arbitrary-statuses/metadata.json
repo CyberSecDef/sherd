@@ -1,0 +1,28 @@
+{
+  "tasks": [
+    {
+      "status": " ",
+      "text": "todo item",
+      "line": 1,
+      "indent": 0
+    },
+    {
+      "status": "x",
+      "text": "done item",
+      "line": 2,
+      "indent": 0
+    },
+    {
+      "status": "/",
+      "text": "in progress",
+      "line": 3,
+      "indent": 0
+    },
+    {
+      "status": ">",
+      "text": "deferred",
+      "line": 4,
+      "indent": 0
+    }
+  ]
+}

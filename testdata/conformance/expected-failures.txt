@@ -1,0 +1,14 @@
+# Conformance cases known not to pass yet, one identifier per line.
+#
+# This file is a RATCHET, enforced by internal/conformance:
+#
+#   listed and failing    -> reported as pending, build stays green
+#   listed and PASSING    -> build FAILS: delete the line
+#   unlisted and failing  -> build FAILS: a regression
+#
+# So the file can only shrink, and progress cannot be silently lost. During P0
+# it shrinks commit by commit, and its diff is the progress report.
+#
+# It is empty because no parser is registered yet; every case is pending for
+# that reason, which the harness reports once rather than listing 667 times.
+# P0.1 populates it, then empties it.

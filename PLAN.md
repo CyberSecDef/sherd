@@ -1,7 +1,7 @@
 # Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.1)
-**Plan version:** 1.1
+**Plan version:** 1.3
 **Status:** Ready for execution
 **Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §12 for the traceability matrix. Updated for spec v1.1 (`NFR-PERF-011`, `FR-SRCH-014`, `FR-SRCH-015`).
 
@@ -150,9 +150,10 @@ Run these in parallel; none may slip past its box.
 ### P-1.4 Seed the conformance corpus
 - Stand up `testdata/conformance/` structure: input `.md`, expected AST JSON, expected metadata JSON, expected HTML.
 - Import the CommonMark 0.31.2 suite as the base layer; add a harness that runs all four comparisons.
-- **Delivers:** corpus harness, CommonMark suite green-by-default (against a stub that is expected to fail until P0.1).
+- **Delivers:** corpus harness, CommonMark suite vendored, expected-failure ratchet.
 - **Covers:** `QA-002` (structure), `FR-MD-001` (harness).
-- **Done when:** `go test ./testdata/conformance/...` runs and reports per-case diffs legibly.
+- **Done when:** `go test ./internal/conformance/...` runs and reports per-case diffs legibly.
+- *Corrected in v1.3: the exit criterion originally said `go test ./testdata/conformance/...`, which cannot work — the Go tool ignores any directory named `testdata`, so no test can live inside one. The corpus stays at `testdata/conformance/` per spec §4.3; the harness lives in `internal/conformance/`.*
 
 ### P-1.5 Threat model and observability skeleton
 - `docs/THREAT-MODEL.md` first draft: malicious note content, malicious plugin, malicious sync server, compromised local account, shoulder-surfing on shared vaults.

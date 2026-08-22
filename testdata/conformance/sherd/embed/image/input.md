@@ -1,0 +1,5 @@
+Before.
+
+![[Diagram.png]]
+
+After.

@@ -1,0 +1,26 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    12
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        11
+      ],
+      "children": [
+        {
+          "type": "text",
+          "range": [
+            0,
+            11
+          ],
+          "literal": "Hello world"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "links": [
+    {
+      "target": "Other Note",
+      "display": "a display name",
+      "kind": "wiki",
+      "range": [
+        12,
+        41
+      ],
+      "line": 1
+    }
+  ]
+}
