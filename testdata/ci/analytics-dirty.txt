@@ -1,0 +1,10 @@
+# Fixture: import paths that MUST be caught. One per line, no blanks.
+github.com/segmentio/analytics-go/v3
+github.com/getsentry/sentry-go
+gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer
+github.com/newrelic/go-agent/v3/newrelic
+github.com/posthog/posthog-go
+github.com/bugsnag/bugsnag-go
+golang.org/x/telemetry/counter
+github.com/amplitude/analytics-go/amplitude
+gopkg.in/launchdarkly/go-server-sdk.v5

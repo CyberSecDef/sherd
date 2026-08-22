@@ -1,0 +1,13 @@
+// Fixture: every line below MUST be flagged.
+package example
+
+import "os"
+
+func write() {
+	_ = os.WriteFile("note.md", nil, 0o644)
+	_, _ = os.Create("note.md")
+	_, _ = os.OpenFile("note.md", os.O_RDWR, 0o644)
+	_ = os.Remove("note.md")
+	_ = os.Rename("a.md", "b.md")
+	_ = os.MkdirAll("dir", 0o755)
+}

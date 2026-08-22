@@ -1,0 +1,7 @@
+# Fixture: every license here is GPL-3.0-compatible and must be accepted.
+github.com/yuin/goldmark,https://github.com/yuin/goldmark/blob/master/LICENSE,MIT
+modernc.org/sqlite,https://gitlab.com/cznic/sqlite/-/blob/master/LICENSE,BSD-3-Clause
+github.com/tetratelabs/wazero,https://github.com/tetratelabs/wazero/blob/main/LICENSE,Apache-2.0
+github.com/fsnotify/fsnotify,https://github.com/fsnotify/fsnotify/blob/main/LICENSE,BSD-3-Clause
+example.com/isc-thing,https://example.com/LICENSE,ISC
+example.com/mpl-thing,https://example.com/LICENSE,MPL-2.0

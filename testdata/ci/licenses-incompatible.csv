@@ -1,0 +1,5 @@
+# Fixture: every license here is incompatible with GPL-3.0 and must be rejected.
+example.com/busl-thing,https://example.com/LICENSE,BUSL-1.1
+example.com/sspl-thing,https://example.com/LICENSE,SSPL-1.0
+example.com/noncommercial-assets,https://example.com/LICENSE,CC-BY-NC-4.0
+example.com/elastic-thing,https://example.com/LICENSE,Elastic-2.0

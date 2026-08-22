@@ -67,6 +67,24 @@ licenses: ## Regenerate THIRD-PARTY-LICENSES.md (LEG-006)
 licenses-check: ## Fail if THIRD-PARTY-LICENSES.md is stale or a license is incompatible (LEG-005)
 	@./scripts/gen-third-party-licenses.sh --check
 
+.PHONY: arch
+arch: ## Check the architecture rules (ARC-MOD-001, ARC-MOD-002)
+	$(GOBIN)/go-arch-lint check --output-color=false
+
+.PHONY: analytics
+analytics: ## Fail if any analytics or telemetry package is linked in (NFR-SEC-001)
+	@./scripts/check-analytics.sh
+
+.PHONY: vault-writes
+vault-writes: ## Fail on direct filesystem writes outside internal/vault (ARC-MOD-003)
+	@./scripts/check-vault-writes.sh
+
+.PHONY: self-test
+self-test: ## Prove the CI guards actually fire (see testdata/ci/)
+	@./scripts/check-analytics.sh --self-test
+	@./scripts/check-vault-writes.sh --self-test
+	@./scripts/gen-third-party-licenses.sh --self-test
+
 .PHONY: spdx-check
 spdx-check: ## Fail if any Go file lacks the SPDX header
 	@missing=$$(find . -name '*.go' -not -path './.git/*' \
@@ -74,7 +92,7 @@ spdx-check: ## Fail if any Go file lacks the SPDX header
 	if [ -n "$$missing" ]; then echo "missing SPDX header:"; echo "$$missing"; exit 1; fi
 
 .PHONY: check
-check: build test fmt-check vet lint sec vuln licenses-check spdx-check ## Run every gate a pull request must pass
+check: build test fmt-check vet lint sec vuln licenses-check spdx-check arch analytics vault-writes self-test ## Run every gate a pull request must pass
 	@echo "all checks passed"
 
 .PHONY: clean

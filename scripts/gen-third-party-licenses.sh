@@ -5,8 +5,14 @@
 # Generate THIRD-PARTY-LICENSES.md from the module graph (LEG-006) and fail on
 # any license that is not GPL-3.0-compatible (LEG-005).
 #
-#   ./scripts/gen-third-party-licenses.sh          regenerate the file
-#   ./scripts/gen-third-party-licenses.sh --check  fail if stale or incompatible
+#   ./scripts/gen-third-party-licenses.sh              regenerate the file
+#   ./scripts/gen-third-party-licenses.sh --check      fail if stale or incompatible
+#   ./scripts/gen-third-party-licenses.sh --self-test  prove the allowlist rejects
+#                                                      an incompatible license
+#
+# Two environment variables exist for the self-test and are not used in normal
+# operation: GRANITE_LICENSE_CSV supplies a fixture in place of running
+# go-licenses, and GRANITE_LICENSE_OUT redirects the generated file.
 #
 # Output is deterministic: entries are sorted and no timestamp is embedded.
 
@@ -15,12 +21,39 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-out="THIRD-PARTY-LICENSES.md"
+out="${GRANITE_LICENSE_OUT:-THIRD-PARTY-LICENSES.md}"
 check=false
 [[ "${1:-}" == "--check" ]] && check=true
 
+if [[ "${1:-}" == "--self-test" ]]; then
+	rc=0
+	tmp_out="$(mktemp)"
+	trap 'rm -f "$tmp_out"' EXIT
+
+	echo "self-test: compatible licenses must pass"
+	if GRANITE_LICENSE_CSV=testdata/ci/licenses-clean.csv \
+	   GRANITE_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
+		echo "  ✓ accepted MIT, Apache-2.0, BSD-3-Clause, ISC, MPL-2.0"
+	else
+		echo "  ✗ FAILED: rejected a GPL-3.0-compatible license" >&2
+		rc=1
+	fi
+
+	echo "self-test: incompatible licenses must fail"
+	if GRANITE_LICENSE_CSV=testdata/ci/licenses-incompatible.csv \
+	   GRANITE_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
+		echo "  ✗ FAILED: accepted a GPL-3.0-incompatible license" >&2
+		rc=1
+	else
+		echo "  ✓ rejected BUSL-1.1, SSPL-1.0, CC-BY-NC-4.0, Elastic-2.0"
+	fi
+
+	[[ $rc -eq 0 ]] && echo "✓ license allowlist self-test passed"
+	exit $rc
+fi
+
 gobin="$(go env GOPATH)/bin"
-if [[ ! -x "$gobin/go-licenses" ]]; then
+if [[ -z "${GRANITE_LICENSE_CSV:-}" && ! -x "$gobin/go-licenses" ]]; then
 	echo "go-licenses not found in $gobin — run 'make tools'" >&2
 	exit 1
 fi
@@ -37,8 +70,13 @@ allowed=(
 csv="$(mktemp)"
 trap 'rm -f "$csv"' EXIT
 
-# go-licenses writes progress to stderr; only stdout is data.
-"$gobin/go-licenses" csv ./... 2>/dev/null | LC_ALL=C sort > "$csv" || true
+if [[ -n "${GRANITE_LICENSE_CSV:-}" ]]; then
+	# Self-test path: read a fixture instead of scanning the module graph.
+	grep -vE '^\s*(#|$)' "$GRANITE_LICENSE_CSV" | LC_ALL=C sort > "$csv"
+else
+	# go-licenses writes progress to stderr; only stdout is data.
+	"$gobin/go-licenses" csv ./... 2>/dev/null | LC_ALL=C sort > "$csv" || true
+fi
 
 incompatible=()
 while IFS=, read -r module url license; do

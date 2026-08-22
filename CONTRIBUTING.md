@@ -102,6 +102,15 @@ Run `make check`. It must be clean. It runs:
 | `gosec` | security lint (`QA-011`) |
 | `govulncheck` | known vulnerabilities (`NFR-SEC-009`) |
 | `go-licenses` | every dependency is GPL-3.0-compatible (`LEG-005`) |
+| `spdx-check` | every Go file carries the SPDX header |
+| `go-arch-lint` | `pkg/` never imports `internal/`; no cycles (`ARC-MOD-001`, `ARC-MOD-002`) |
+| `check-vault-writes.sh` | no filesystem writes outside `internal/vault` (`ARC-MOD-003`) |
+| `check-analytics.sh` | no analytics or telemetry in the dependency graph (`NFR-SEC-001`) |
+| `self-test` | the four guards above still fire against known-bad fixtures |
+
+CI additionally runs what a laptop cannot: the cross-compile matrix, the mobile
+compile guard, a build at the `go.mod` floor, a reproducibility check, and a
+static binary executed under musl. See `.github/workflows/ci.yml`.
 
 ---
 

@@ -1,0 +1,13 @@
+// Fixture: must NOT be flagged. Reads and non-mutating calls only.
+// Named .go.txt so the Go toolchain ignores it.
+package example
+
+import "os"
+
+func read() {
+	_, _ = os.ReadFile("note.md")
+	_, _ = os.Open("note.md")
+	_, _ = os.Stat("note.md")
+	_, _ = os.ReadDir(".")
+	_ = os.Getenv("HOME")
+}

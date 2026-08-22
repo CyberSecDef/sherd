@@ -1,0 +1,15 @@
+# Fixture: import paths that must NOT trip the analytics denylist.
+# Includes near-misses chosen to catch an over-eager matcher.
+fmt
+os
+github.com/yuin/goldmark
+github.com/yuin/goldmark/ast
+modernc.org/sqlite
+github.com/fsnotify/fsnotify
+github.com/tetratelabs/wazero
+golang.org/x/crypto/argon2
+golang.org/x/text/unicode/norm
+github.com/CyberSecDef/granite/internal/vault
+github.com/CyberSecDef/granite/pkg/format
+log/slog
+net/http
