@@ -117,6 +117,7 @@ var delimiters = map[string]delimiterRule{
 	"emphasis":          {"*_", "*_"},
 	"strong":            {"*_", "*_"},
 	"code_span":         {"`", "`"},
+	"strikethrough":     {"~", "~"},
 	"link":              {"[", ")]"},
 	"image":             {"!", ")]"},
 	"blockquote":        {">", ""},

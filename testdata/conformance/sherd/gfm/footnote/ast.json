@@ -1,0 +1,75 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    21
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        8
+      ],
+      "children": [
+        {
+          "type": "text",
+          "range": [
+            0,
+            4
+          ],
+          "literal": "text"
+        },
+        {
+          "type": "footnote_link",
+          "range": [
+            4,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "type": "footnote_list",
+      "range": [
+        16,
+        21
+      ],
+      "children": [
+        {
+          "type": "footnote",
+          "range": [
+            16,
+            21
+          ],
+          "children": [
+            {
+              "type": "paragraph",
+              "range": [
+                16,
+                21
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    16,
+                    20
+                  ],
+                  "literal": "note"
+                },
+                {
+                  "type": "footnote_backlink",
+                  "range": [
+                    21,
+                    21
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

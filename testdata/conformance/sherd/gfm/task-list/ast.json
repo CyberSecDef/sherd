@@ -1,0 +1,87 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    22
+  ],
+  "children": [
+    {
+      "type": "list",
+      "range": [
+        0,
+        21
+      ],
+      "children": [
+        {
+          "type": "list_item",
+          "range": [
+            0,
+            10
+          ],
+          "children": [
+            {
+              "type": "text_block",
+              "range": [
+                2,
+                10
+              ],
+              "children": [
+                {
+                  "type": "task_check_box",
+                  "range": [
+                    2,
+                    5
+                  ]
+                },
+                {
+                  "type": "text",
+                  "range": [
+                    6,
+                    10
+                  ],
+                  "literal": "done"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "list_item",
+          "range": [
+            11,
+            21
+          ],
+          "children": [
+            {
+              "type": "text_block",
+              "range": [
+                13,
+                21
+              ],
+              "children": [
+                {
+                  "type": "task_check_box",
+                  "range": [
+                    13,
+                    16
+                  ]
+                },
+                {
+                  "type": "text",
+                  "range": [
+                    17,
+                    21
+                  ],
+                  "literal": "todo"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "attrs": {
+        "ordered": false
+      }
+    }
+  ]
+}

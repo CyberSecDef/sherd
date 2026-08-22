@@ -1,0 +1,60 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    20
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        19
+      ],
+      "children": [
+        {
+          "type": "strikethrough",
+          "range": [
+            0,
+            8
+          ],
+          "children": [
+            {
+              "type": "text",
+              "range": [
+                2,
+                6
+              ],
+              "literal": "gone"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "range": [
+            8,
+            13
+          ],
+          "literal": " and "
+        },
+        {
+          "type": "emphasis",
+          "range": [
+            13,
+            19
+          ],
+          "children": [
+            {
+              "type": "text",
+              "range": [
+                14,
+                18
+              ],
+              "literal": "kept"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

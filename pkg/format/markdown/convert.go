@@ -311,6 +311,8 @@ func (b *builder) expand(gn ast.Node, out *Node) {
 		b.expandEmphasis(v, out)
 	case *ast.CodeSpan:
 		b.expandCodeSpan(out)
+	case *east.Strikethrough:
+		b.expandStrikethrough(out)
 	case *east.TableHeader, *east.TableRow:
 		b.expandTableRow(out)
 	case *east.Table:
@@ -542,6 +544,35 @@ func (b *builder) expandEmphasis(v *ast.Emphasis, out *Node) {
 	if runOf(b.src[s:out.Range.Start]) && runOf(b.src[out.Range.End:e]) {
 		out.Range = Range{s, e}
 	}
+}
+
+// expandStrikethrough covers the tilde runs GFM writes around the text.
+//
+// Emphasis carries its delimiter length on the node; strikethrough does not,
+// so the opening run is measured from the source and the closing one is
+// required to match it exactly. Anything else — a longer closing run, a stray
+// tilde beyond it — is left alone rather than guessed at, which costs nothing:
+// the node keeps the range it had, and the invariant it would have gained is
+// one no caller can rely on anyway. A node with no run in front of it takes
+// that same path, arriving at an expansion of nothing.
+func (b *builder) expandStrikethrough(out *Node) {
+	if len(out.Children) == 0 {
+		return
+	}
+	s := out.Range.Start
+	for s > 0 && b.src[s-1] == '~' {
+		s--
+	}
+	e := out.Range.End + (out.Range.Start - s)
+	for i := out.Range.End; i < e; i++ {
+		if i >= len(b.src) || b.src[i] != '~' {
+			return
+		}
+	}
+	if e < len(b.src) && b.src[e] == '~' {
+		return
+	}
+	out.Range = Range{s, e}
 }
 
 // runOf reports whether s is a non-empty run of a single emphasis delimiter.

@@ -88,6 +88,31 @@ corpus refuse a range-less AST removes the option of deferring it.
 Ranges must satisfy: `0 <= start <= end <= len(input)`, every child's range
 contained by its parent's, and siblings non-overlapping and ordered.
 
+### Delimiters, and where a node stops
+
+A node owns the delimiters that make it what it is: `*em*` is
+`emphasis[0,4)`, not `[1,3)`, so replacing the node replaces its markers too
+rather than leaving them orphaned in the file. `internal/conformance` checks
+this for the kinds whose extent is unambiguous — emphasis, strong,
+strikethrough, code spans, links, images, blockquotes, fences and list items —
+and a kind absent from that list is unchecked, not exempt. Adding one is how a
+new extension gets held to the rule.
+
+Two places the rule does not reach today, both recorded here so a case
+asserting them is read as pinning a known limit rather than as a bug:
+
+- **Table cells own their content, not their pipes.** The `|` between two cells
+  belongs to neither, since a single hull cannot be shared. `table_header` and
+  `table_row` do cover the whole line, so nothing is lost above the cell.
+- **A footnote definition's label lies outside every node.** For
+  `text[^1]\n\n[^1]: note\n` the tree holds `footnote[16,21)` covering
+  `note\n`, and the `[^1]: ` at 10–16 belongs to nothing. goldmark models the
+  label as structure rather than as content and gives it no position, so
+  recovering it means re-scanning the source. The incremental reparser is
+  unaffected — a footnote is document-scoped and forces a full parse either way
+  (see `FR-MD-004`) — but source↔render mapping over a definition has a hole in
+  it, and closing it is P0.3 work, alongside the rest of the footnote syntax.
+
 ## `metadata.json`
 
 Mirrors the index schema in specification §8.2, so a case asserts exactly what

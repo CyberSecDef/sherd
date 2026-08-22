@@ -1,0 +1,44 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    30
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        29
+      ],
+      "children": [
+        {
+          "type": "text",
+          "range": [
+            0,
+            4
+          ],
+          "literal": "see "
+        },
+        {
+          "type": "auto_link",
+          "range": [
+            4,
+            25
+          ],
+          "attrs": {
+            "destination": "https://example.com/x"
+          }
+        },
+        {
+          "type": "text",
+          "range": [
+            25,
+            29
+          ],
+          "literal": " now"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    30
+  ],
+  "children": [
+    {
+      "type": "table",
+      "range": [
+        0,
+        29
+      ],
+      "children": [
+        {
+          "type": "table_header",
+          "range": [
+            0,
+            9
+          ],
+          "children": [
+            {
+              "type": "table_cell",
+              "range": [
+                2,
+                3
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    2,
+                    3
+                  ],
+                  "literal": "a"
+                }
+              ]
+            },
+            {
+              "type": "table_cell",
+              "range": [
+                6,
+                7
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    6,
+                    7
+                  ],
+                  "literal": "b"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "table_row",
+          "range": [
+            20,
+            29
+          ],
+          "children": [
+            {
+              "type": "table_cell",
+              "range": [
+                22,
+                23
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    22,
+                    23
+                  ],
+                  "literal": "1"
+                }
+              ]
+            },
+            {
+              "type": "table_cell",
+              "range": [
+                26,
+                27
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    26,
+                    27
+                  ],
+                  "literal": "2"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
