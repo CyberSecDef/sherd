@@ -17,114 +17,94 @@ Granite is a clean-room, open-source, local-first PKM application in **Go 1.23+*
 
 ---
 
-# Karpathy Guidelines 12 Rules
+# Baseline Engineering Rules
 
-Behavioral guidelines to reduce common LLM coding mistakes, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
+Twelve working rules aimed at the failure modes language models fall into when writing code. The topics are adapted from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876); the wording here is original to this repository and tuned to Granite.
 
-These rules apply to every task in this project unless explicitly overridden.
-**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+They apply to every task unless a Granite-specific override below supersedes them. **Tradeoff:** these rules trade speed for caution. On genuinely trivial work, use judgment.
 
-## 1. Think Before Coding
+## 1. Think first
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+Do not assume, do not paper over confusion, do not bury a tradeoff.
 
-Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+Before writing code: say what you are assuming, and ask if the assumption is load-bearing. If a request has two plausible readings, name both instead of quietly choosing one. If a simpler approach exists, argue for it. If something does not make sense, stop and say what does not make sense.
 
-## 2. Simplicity First
+## 2. Build the smallest thing that works
 
-**Minimum code that solves the problem. Nothing speculative.**
+Write the minimum code that solves the stated problem, and nothing on speculation.
 
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
+No features nobody asked for. No abstraction over a single call site. No configuration knob invented for a hypothetical future. No error handling for states that cannot occur. If a 200-line implementation would work at 50, write the 50.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+The check: would an experienced engineer reading this call it overbuilt? If yes, cut it.
 
-## 3. Surgical Changes
+## 3. Change only what the task requires
 
-**Touch only what you must. Clean up only your own mess.**
+Leave adjacent code alone. Do not "tidy" nearby comments, formatting, or structure while passing through. Do not refactor working code you were not asked to touch. Match the surrounding style even where your taste differs. If you spot unrelated dead code, mention it — do not delete it.
 
-When editing existing code:
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
+Clean up after yourself, though: if your change orphans an import, a variable, or a function, remove it. Pre-existing dead code stays until someone asks.
 
-When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
+The check: every changed line should trace to the request.
 
-The test: Every changed line should trace directly to the user's request.
+## 4. Work toward a verifiable goal
 
-## 4. Goal-Driven Execution
+Convert the task into something you can check, then loop until it checks out.
 
-**Define success criteria. Loop until verified.**
+- "Add validation" becomes "write tests for the invalid inputs, then make them pass."
+- "Fix the bug" becomes "write a test that reproduces it, then make it pass."
+- "Refactor X" becomes "the suite is green before and after."
 
-Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
+For anything multi-step, state the plan as steps paired with their verification:
 
-For multi-step tasks, state a brief plan:
 ```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
+1. [step] -> verify: [check]
+2. [step] -> verify: [check]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+Sharp success criteria let you work independently. Vague ones ("make it work") force you back for clarification at every turn.
 
-<!-- Extended Rules -->
+## 5. Reserve the model for judgment
 
-## 5. Use the model only for judgment calls
-Use Claude for: classification, drafting, summarization, extraction from unstructured text.
-Do NOT use Claude for: routing, retries, status-code handling, deterministic transforms.
-If a status code already answers the question, plain code answers the question.
+Use a language model for what needs judgment: classification, drafting, summarizing, pulling structure out of unstructured text.
 
-## 6. Token budgets are not advisory
-Per-task budget: 4,000 tokens.
-Per-session budget: 30,000 tokens.
-If a task is approaching budget, summarize and start fresh. Do not push through.
-Surfacing the breach > silently overrunning.
+Do not use one for work that is deterministic: routing, retry logic, status-code handling, mechanical transforms. If a status code already answers the question, code answers the question.
 
-## 7. Surface conflicts, don't average them
-If two existing patterns in the codebase contradict, don't blend them.
-Pick one (the more recent / more tested), explain why, and flag the other for cleanup.
-"Average" code that satisfies both rules is the worst code.
+## 6. Respect the budget, and say when you are near it
+
+Work in bounded units. When a task is running past its budget, stop at a clean boundary, summarize, and start fresh rather than pushing through.
+
+Announcing that you are out of room beats silently running over. (Granite replaces the token-count form of this rule — see override **O2**.)
+
+## 7. Name conflicts instead of splitting the difference
+
+When two patterns in the codebase contradict each other, do not blend them. Choose one — normally the newer or better-tested — explain the choice, and flag the loser for cleanup. Code that half-satisfies both conventions is worse than code that follows either.
 
 ## 8. Read before you write
-Before adding code in a file, read the file's exports, the immediate caller, and any obvious shared utilities.
-If you don't understand why existing code is structured the way it is, ask before adding to it.
-"Looks orthogonal to me" is the most dangerous phrase in this codebase.
 
-## 9. Tests verify intent, not just behavior
-Every test must encode WHY the behavior matters, not just WHAT it does.
-A test like `expect(getUserName()).toBe('John')` is worthless if the function takes a hardcoded ID.
-If you can't write a test that would fail when business logic changes, the function is wrong.
+Before adding to a file, read its exports, its immediate caller, and the shared utilities it leans on. If you cannot explain why the existing code is shaped the way it is, ask before adding to it.
 
-## 10. Checkpoint after every significant step
-After completing each step in a multi-step task: summarize what was done, what's verified, what's left.
-Don't continue from a state you can't describe back to me.
-If you lose track, stop and restate.
+"This looks orthogonal to me" is where the damage starts.
 
-## 11. Match the codebase's conventions, even if you disagree
-If the codebase uses snake_case and you'd prefer camelCase: snake_case.
-If the codebase uses class-based components and you'd prefer hooks: class-based.
-Disagreement is a separate conversation. Inside the codebase, conformance > taste.
-If you genuinely think the convention is harmful, surface it. Don't fork it silently.
+## 9. Tests should encode why, not just what
+
+A test must capture why the behavior matters. `expect(getUserName()).toBe("John")` proves nothing if the function returns a hardcoded value.
+
+The check: if changing the business logic would not break your test, you are testing the wrong thing.
+
+## 10. Checkpoint at every step
+
+At the end of each step of a multi-step task, state what got done, what is verified, and what remains. Never continue from a state you cannot describe back. If you lose the thread, stop and restate rather than guessing forward.
+
+## 11. Follow the codebase, not your preferences
+
+If the code uses snake_case and you prefer camelCase, write snake_case. If it uses one pattern and you would choose another, use its pattern. Inside the codebase, consistency beats taste.
+
+Preferences are a separate conversation, and worth having — if a convention is actively harmful, say so out loud. Do not quietly fork it.
 
 ## 12. Fail loud
-If you can't be sure something worked, say so explicitly.
-"Migration completed" is wrong if 30 records were skipped silently.
-"Tests pass" is wrong if you skipped any.
-"Feature works" is wrong if you didn't verify the edge case I asked about.
-Default to surfacing uncertainty, not hiding it.
+
+If you cannot confirm something worked, say so plainly.
+
+"Migration complete" is false if thirty records were skipped. "Tests pass" is false if you skipped some. "The feature works" is false if you never checked the edge case that was asked about. Surface the uncertainty; never let it pass as success.
 ---
 
 # Granite-Specific Overrides
@@ -139,7 +119,7 @@ The test becomes: *does this line trace to a requirement ID, or to a plan step's
 
 ## O2. Rule 6 (Token budgets) — replaced by step-scoped checkpointing
 
-The 4,000/30,000 numbers do not fit this codebase; a single P0 step is larger than that by an order of magnitude. The intent behind the rule — *surface the breach rather than silently overrun* — is kept, re-anchored to work units instead of tokens:
+The source guidelines set this as a hard token budget (4,000 per task, 30,000 per session). Those numbers do not fit this codebase — a single P0 step exceeds them by an order of magnitude. The intent is kept, re-anchored from token counts to work units:
 
 - Work in units no larger than one `PLAN.md` step. If a step is too big to hold, split it and say how you split it.
 - Checkpoint at every step boundary: what landed, what's verified, what's left (Rule 10).
