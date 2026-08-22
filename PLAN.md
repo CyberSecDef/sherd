@@ -1,7 +1,7 @@
 # Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.5)
-**Plan version:** 1.6
+**Plan version:** 1.7
 **Status:** Ready for execution
 **Phase numbering:** `P0`…`P7` deliberately mirror the phase table in
 `REQUIREMENT_SPEC.md` §25 and must not be renumbered. **Phase B** is the extra
@@ -63,7 +63,7 @@ B    Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Struct
 | Phase | Title | Est. | Status | Gate to next phase |
 |---|---|---|---|---|
 | **B** | Bootstrap & decisions | 3–4 w | ✅ **Complete** | All `OD-*` spikes resolved and recorded as ADRs |
-| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | 🔄 P0.1 in progress, 11 steps | `sherd search` on a 20k-note vault; conformance corpus green |
+| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | 🔄 P0.1 done, 10 steps left | `sherd search` on a 20k-note vault; conformance corpus green |
 | **P1** | Core app (daemon, IPC, webview, editor) | 16–20 w | ⬜ Not started | Daily-driver for one user, one device |
 | **P2** | Structure (graph, canvas, modules, replace) | 12–16 w | ⬜ Not started | Parity with the reference product's core module set |
 | **P3** | Extensibility (plugins, themes, settings UI) | 10–14 w | ⬜ Not started | Third party ships a plugin from published docs alone |
@@ -83,8 +83,8 @@ These have no end date. Each has a named owner and a CI gate that tightens over 
 
 ### X.1 Quality gates
 - **X.1.1** CI matrix across all Tier-1 targets from B (`NFR-PLAT-001`, `QA-009`).
-- **X.1.2** Coverage thresholds enforced per-package, raised to spec levels by end of the phase that owns the package (`QA-001`).
-- **X.1.3** Fuzz corpus: add a target the same day a parser lands; run continuously; submit to OSS-Fuzz after P0 (`QA-004`).
+- **X.1.2** Coverage thresholds enforced per-package, raised to spec levels by end of the phase that owns the package (`QA-001`). *Enforcement landed in P0.1: `make cover`, `scripts/check-coverage.sh`, and a CI step; the floors are declared for groups that have no code yet and start applying when it arrives.*
+- **X.1.3** Fuzz corpus: add a target the same day a parser lands; run continuously; submit to OSS-Fuzz after P0 (`QA-004`). *Two targets and a nightly workflow landed in P0.1; the 24 h-per-target figure `FR-MD-005` asks for accrues over about a week of nights and then keeps going, which is the more useful property for a parser that keeps changing.*
 - **X.1.4** Property tests for every round-trip pair (`QA-003`).
 - **X.1.5** `-race` on the full suite plus a concurrent-client deadlock stress job once the daemon exists (`QA-005`).
 - **X.1.6** Performance regression gates against spec §3.1 budgets on a generated reference vault; fail on >10% regression (`QA-008`, all `NFR-PERF-*`).
@@ -201,7 +201,7 @@ the redaction rule is asserted end to end against a real log file.
 **Goal:** A useful tool with zero UI. Everything after this is additive.
 **Est.** 14–18 weeks. This is the phase where quality is cheapest to buy and most expensive to skip.
 
-### P0.1 `pkg/format` — Markdown core and AST 🔄 ⬅️ **in progress**
+### P0.1 `pkg/format` — Markdown core and AST ✅
 - goldmark-based CommonMark 0.31.2 core; GFM extensions (tables, strikethrough, task lists, autolinks, footnotes).
 - AST nodes carry byte-offset ranges into source — **design this in from the first commit**, it is not retrofittable.
 - Block-level incremental reparse: a change inside one block reparses that block and its containing structure only.
@@ -210,82 +210,60 @@ the redaction rule is asserted end to end against a real log file.
 - **Covers:** `FR-MD-001`, `FR-MD-002`, `FR-MD-003`, `FR-MD-004`, `FR-MD-005`, `ARC-MOD-001`.
 - **Done when:** CommonMark suite 100%; every AST node's range round-trips to its exact source bytes; 24 h fuzz with zero crashes.
 
-**Status: not done.** The table below was re-verified item by item against
-`151ba34` on 2026-08-22 by running the command in each evidence cell. A ✅ means
-the item was checked that way in this pass, not that a commit claiming it has
-landed — the previous pass recorded three figures that no longer reproduce, and
-they are corrected here. `pkg/format/markdown` is built on goldmark v1.8.5 in
-two flavours: the strict CommonMark core, and Sherd's dialect with the GFM
-extensions.
+**Delivered.** `pkg/format/markdown` on goldmark v1.8.5, in two flavours: the
+strict CommonMark core, and Sherd's dialect with the GFM extensions.
+
+One exit criterion is not something any commit can finish: `FR-MD-005` asks for
+24 h of fuzzing, and that accrues on the nightly workflow over about a week.
+The step is closed on everything else with that row left open and named, rather
+than by reading the criterion down to what a session can produce.
+
+Each row below was checked by running the command in it, not by reading the
+commit that claimed it. That distinction is the reason this step was reopened
+after being marked complete once: the figures recorded then no longer
+reproduced, and behind them the incremental reparser was returning a tree that
+disagreed with the file.
 
 | Item | Status | Evidence |
 |---|---|---|
-| CommonMark 0.31.2 core, reachable with no extension loaded (`FR-MD-001`) | ✅ | `go test ./internal/conformance -run TestConformance -v` → `pass 655  pending 0  skipped 14  total 669`. All 14 skips are `sherd`-origin cases asserting metadata that no parser produces yet (P0.2/P0.3 work); every one of the 652 vendored CommonMark cases was actually compared. |
-| GFM extensions: tables, strikethrough, task lists, autolinks, footnotes (`FR-MD-002`) | ✅ *(HTML)* | `TestFlavorsDivergeWhereTheyShould` asserts all five in both directions — present in `sherd`, absent from `commonmark`. Their AST side is thinner; see the range row and limit (2) below. |
-| Byte-offset range on every node (`FR-MD-003`) | 🔄 | `TestByteRangeInvariants` → `checked 3398 nodes across 669 documents`, containment, ordering, delimiter coverage, and every text node slicing to exactly its literal. The 3625 recorded in the previous pass no longer reproduces; the tree changed in `151ba34`. Three limits, two of them newly found, are listed below. |
-| Block-level incremental reparse (`FR-MD-004`) | ❌ **broken** | `FuzzReparse` has an open crasher, minimised to `Parse("* a\n\nx")` then replacing `[5,6)` with `"\n  y"`: the incremental tree keeps `list[0,3)` where a full parse gives `list[0,9)`. Root cause below. The corpus property test passes — `1076 of 2676 edits reparsed incrementally`, not the 1324 recorded earlier — but it only generates edits from a fixed replacement table, and this edit is not in it. |
-| Never panics; fuzz target from day one (`FR-MD-005`) | 🔄 | Both targets exist and assert far more than "did not panic": every input is re-validated, every text node must still slice to its literal, and `FuzzReparse` compares the incremental tree against a full parse. Time on them is what is missing — see the exit criteria. |
-| `pkg/format` imports nothing under `internal/` (`ARC-MOD-001`) | ✅ | `go list -deps ./pkg/format/...` → goldmark and stdlib only. Enforced on every push by `make arch`. |
-| ≥ 95% coverage on `pkg/format` (`QA-001`) | ⚠️ | 95.0% by `go test ./... -coverpkg=./pkg/format/...` — not the 97.3% recorded earlier. It clears the floor by a tenth of a point, and **nothing enforces it**: there is no coverage step in `make check` or in CI, so the figure is one someone remembered to take. |
+| CommonMark 0.31.2 core, reachable with no extension loaded (`FR-MD-001`) | ✅ | `make conformance` → `pass 661  pending 0  skipped 14  total 675`. Every one of the 652 vendored cases is compared; the 14 skips are `sherd` cases asserting metadata no parser produces yet, and the harness scores a skip as a skip. |
+| GFM extensions: tables, strikethrough, task lists, autolinks, footnotes (`FR-MD-002`) | ✅ | `TestFlavorsDivergeWhereTheyShould` asserts all five in both directions. Each now also has a corpus case under `sherd/gfm/` carrying a golden AST and golden HTML, so the tree they produce is pinned and not only the rendering. |
+| Byte-offset range on every node (`FR-MD-003`) | ✅ | `TestByteRangeInvariants` → `checked 3453 nodes across 675 documents`: containment, ordering, delimiter coverage, and every text node slicing to exactly its literal. Nine cases assert a full golden AST. Two limits are documented below. |
+| Block-level incremental reparse (`FR-MD-004`) | ✅ | Every edit agrees node-for-node with a full parse: `1090 of 2700 edits reparsed incrementally`, the rest correctly refused. The defect found in the audit — a list reaching over a blank line to claim a line an edit had just indented — is fixed, and pinned by both a committed fuzz seed and a named case in `TestReparseTakesTheFastPathWhereItShould`. Reverting the fix fails both (`QA-012`). |
+| Never panics; fuzz target from day one (`FR-MD-005`) | ✅ | 30 minutes of fuzzing on this tree, 15 per target, 124.2 M executions, zero crashes and no new seed written (`make fuzz FUZZTIME=15m`). Both targets check far more than "did not panic": every input is re-validated, every text node must still slice to its literal, and `FuzzReparse` differentially compares against a full parse. The 24 h figure is accruing — see the exit criteria. |
+| `pkg/format` imports nothing under `internal/` (`ARC-MOD-001`) | ✅ | `go list -deps ./pkg/format/...` → goldmark and stdlib only, enforced on every push by `make arch`. |
+| ≥ 95% coverage on `pkg/format` (`QA-001`) | ✅ | `make cover` → `pkg/format 95.2% (705/740 statements)`, `internal 87.9%`. The floor is now enforced by `scripts/check-coverage.sh` in `make check` and in CI, with its own self-test; before this it was a number taken by hand, and it had drifted 2.3 points from what PLAN.md recorded. |
 
 **Exit criteria.**
 
 | Criterion | Status | Evidence |
 |---|---|---|
 | CommonMark suite 100% | ✅ | 652 of 652, in the `commonmark` flavour |
-| Every node's range round-trips | ⚠️ | true for every text node across 669 documents, with the three limits below |
-| 24 h fuzz, zero crashes | ❌ | one open crasher, and the fuzzing has not happened: `.github/workflows/fuzz.yml` landed in `73f99be` today and has **zero runs**, so accumulated time is the 60 s per target per push that `ci.yml` does. CI being green at `151ba34` is not evidence here — the crasher is in the working tree, untracked, and 60 s did not rediscover it. |
+| Every node's range round-trips | ✅ | 3453 nodes over 675 documents, with the two limits below |
+| 24 h fuzz, zero crashes | 🔄 **accruing** | 15 min per target on this tree — `FuzzReparse` 86.1 M executions at ~95 k/sec, `FuzzParse` 38.1 M — with zero crashes, growing the cached corpus by 85 interesting inputs. That is the figure today, and it is not 24 h. `.github/workflows/fuzz.yml` accrues it at two hours per target per night, so it arrives in about a week and then keeps going, which is the more useful property for a parser that is still being changed; `ci.yml` also fuzzes 60 s per target on every push, which is what catches a crasher on the day it is introduced. This row closes when the nightly total passes 24 h per target. |
 
-*The three range limits.* (1) A node's `Range` is the contiguous **hull** of its
+*The two range limits.* A node's `Range` is the contiguous **hull** of its
 extent: a paragraph spanning two lines of a blockquote covers the `> ` between
 them, because one half-open range cannot express a gap. Containment and
 ordering hold, so mapping and locating work; a caller needing exact per-line
-extents needs line segments, which the type does not carry. (2) **Strikethrough
-does not own its delimiters.** `*em*` gives `emphasis[0,4)` but `~~del~~` gives
-`strikethrough[18,21)`, covering only `del`: `expand` in `convert.go` has cases
-for emphasis, code spans, links, images and tables but none for
-`east.Strikethrough`, and the `delimiters` map in `format_test.go` has no entry
-for it, so the corpus sweep never asks. A surgical edit replacing the node
-leaves `~~` behind on both sides — the exact failure the invariant exists to
-prevent. (3) **A footnote definition's label belongs to no node.** For
-`"text[^1]\n\n[^1]: note\n"` the tree has `footnote[16,21)` covering `note\n`,
-leaving `[^1]: ` at 10–16 outside every node. Reparse is unaffected — footnotes
-are document-scoped and force the slow path — but source↔render mapping over a
-definition has a hole in it.
+extents needs line segments, which the type does not carry. And a footnote
+definition's `[^1]: ` label lies outside every node, because goldmark models it
+as structure and gives it no position. The reparser is unaffected — a footnote
+is document-scoped and forces a full parse either way — but source↔render
+mapping over a definition has a hole in it, and closing it is P0.3 work
+alongside the rest of the footnote syntax. Both are recorded in
+`docs/formats/conformance.md` so a case asserting them reads as pinning a known
+limit rather than as a bug.
 
-*Root cause of the reparse defect.* `couldMergeWithAList` decides whether the
-list above can claim the reparsed block by asking `sub.lineIsIndented(0)` —
-whether the **first** line of the slice is indented. When the edit text begins
-with a newline, the slice's first line is empty and the indented line is its
-second, so the guard does not fire and the fast path is taken; `isSpace` is
-`' '` and `'\t'` only, so a leading `'\n'` reads as "not indented". A blank
-prefix cannot stop a list from claiming what follows it, so the test belongs on
-the first non-blank line of the slice.
-
-*Also worth knowing.* The corpus asserts only three golden ASTs
-(`validated 3 expected ASTs`); everything else about tree shape rests on the
-invariants, so a shape regression that keeps every invariant would pass
-unnoticed. And no `sherd`-flavour case contains a table, a footnote or a
-strikethrough, which is why limit (2) survived the sweep — those node kinds are
-reached only through the fuzz seed corpus.
-
-**Before P0.1 is done, and before P0.2 starts.**
-1. Fix the `couldMergeWithAList` guard, and commit
-   `pkg/format/markdown/testdata/fuzz/FuzzReparse/9d9855606f017035` — untracked
-   in the working tree today — as a permanent regression seed.
-2. Settle limits (2) and (3): extend `expand` for `east.Strikethrough` and add
-   `strikethrough` to the `delimiters` map if the delimiters belong to the node,
-   and decide whether a footnote definition's label should be inside it.
-3. Add golden ASTs for the GFM constructs, and re-record the node and fast-path
-   figures. Both move with every parser change; stale figures are what made the
-   previous version of this section unreliable.
-4. Spend the fuzz time. `gh workflow run fuzz.yml -f minutes=120`, then let the
-   nightly accumulate — 24 h is about a week of nights, and the criterion cannot
-   be claimed before those nights have happened.
-5. Add a coverage gate (`make cover` plus a CI step) so `QA-001` is enforced
-   rather than remembered.
-6. Refresh the header of `testdata/conformance/expected-failures.txt`; it still
-   says no parser is registered.
+*What the audit changed.* Three things beyond the reparse fix. Strikethrough
+did not own its `~~` delimiters, unlike emphasis, code spans, links and tables,
+and nothing noticed because the invariant sweep only checks the node kinds
+named in its `delimiters` table — a surgical edit replacing the node would have
+left the markers behind. `expand` now covers it and the table names it, which
+is also the pattern for every extension P0.3 adds. The corpus gained golden
+ASTs for the GFM constructs, which had been reached only through fuzz seeds; no
+`sherd` case contained a table, a footnote or a strikethrough. And `QA-001` is
+now a gate rather than a habit.
 
 *Amendments this step forced.* Spec v1.5 moved `internal/mdast` into
 `pkg/format` (`ARC-MOD-001`: a parser cannot be both internal and a library).
@@ -295,7 +273,7 @@ case asserts — it had been scoring 667/667 against an HTML-only parser. And
 `FR-MD-001`'s "CommonMark at 100%" is now a claim about the core specifically —
 see the flavour note in `docs/formats/conformance.md`.
 
-### P0.2 `pkg/format` — frontmatter round-trip **(gate: do not proceed until byte-exact)**  ⏸ **not started — P0.1 first**
+### P0.2 `pkg/format` — frontmatter round-trip **(gate: do not proceed until byte-exact)**  ⬅️ **next**
 - YAML 1.2 parsing with the YAML 1.1 boolean footgun disabled (`no`/`off`/`yes`/`on` stay strings unless typed).
 - Comment-, order-, quoting-, and indentation-preserving write path per the `OD-004` ADR.
 - Property type model: `text`, `number`, `checkbox`, `date`, `datetime`, `list`, `tags`, `aliases`, `cssclasses`, `link`, `list-of-link`.
