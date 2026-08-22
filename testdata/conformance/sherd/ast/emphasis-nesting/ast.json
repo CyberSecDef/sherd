@@ -1,0 +1,77 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    14
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        13
+      ],
+      "children": [
+        {
+          "type": "text",
+          "range": [
+            0,
+            2
+          ],
+          "literal": "a "
+        },
+        {
+          "type": "emphasis",
+          "range": [
+            2,
+            9
+          ],
+          "children": [
+            {
+              "type": "strong",
+              "range": [
+                3,
+                8
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "range": [
+                    5,
+                    6
+                  ],
+                  "literal": "b"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "range": [
+            9,
+            10
+          ],
+          "literal": " "
+        },
+        {
+          "type": "code_span",
+          "range": [
+            10,
+            13
+          ],
+          "children": [
+            {
+              "type": "text",
+              "range": [
+                11,
+                12
+              ],
+              "literal": "c"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

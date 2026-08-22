@@ -23,7 +23,7 @@ exclude:
 # test file in the repository, which would take ARC-MOD-002 enforcement with
 # it. The exception is one file wide and named in full on purpose.
 excludeFiles:
-  - "internal/conformance/register_test.go"
+  - "internal/conformance/format_test.go"
 
 allow:
   depOnAnyVendor: false

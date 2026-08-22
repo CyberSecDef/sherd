@@ -1,0 +1,38 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    10
+  ],
+  "children": [
+    {
+      "type": "blockquote",
+      "range": [
+        0,
+        9
+      ],
+      "children": [
+        {
+          "type": "heading",
+          "range": [
+            2,
+            9
+          ],
+          "children": [
+            {
+              "type": "text",
+              "range": [
+                4,
+                9
+              ],
+              "literal": "Title"
+            }
+          ],
+          "attrs": {
+            "level": 1
+          }
+        }
+      ]
+    }
+  ]
+}
