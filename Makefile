@@ -89,9 +89,11 @@ conformance: ## Run the golden-file Markdown corpus (QA-002)
 	$(GO) test ./internal/conformance/... -v
 
 .PHONY: fuzz
-fuzz: ## Fuzz the parser and the incremental reparser (FR-MD-005); FUZZTIME=1m
-	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzParse -fuzztime $(FUZZTIME)
-	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzReparse -fuzztime $(FUZZTIME)
+fuzz: ## Fuzz every parser in pkg/format (FR-MD-005, FR-MD-033); FUZZTIME=1m
+	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzParse -fuzztime $(FUZZTIME) -timeout 0
+	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzReparse -fuzztime $(FUZZTIME) -timeout 0
+	$(GO) test ./pkg/format/frontmatter/ -run '^$$' -fuzz FuzzParse -fuzztime $(FUZZTIME) -timeout 0
+	$(GO) test ./pkg/format/frontmatter/ -run '^$$' -fuzz FuzzExtent -fuzztime $(FUZZTIME) -timeout 0
 
 .PHONY: self-test
 self-test: ## Prove the CI guards actually fire (see testdata/ci/)

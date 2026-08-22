@@ -9,9 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"gopkg.in/yaml.v3"
 )
+
+// yamlNode is an alias so the rest of the package can name the parser's node
+// type without repeating the import's shape in every signature.
+type yamlNode = yaml.Node
 
 // read parses the block and fills in Properties, or Err.
 func (d *Document) read() {
@@ -38,6 +43,7 @@ func (d *Document) read() {
 		return
 	}
 
+	d.root = root
 	base := d.lineOf(d.Inner.Start)
 	for i := 0; i+1 < len(root.Content); i += 2 {
 		k, v := root.Content[i], root.Content[i+1]
@@ -78,23 +84,72 @@ func (d *Document) syntaxError(err error) *SyntaxError {
 
 // offsetIn converts a 1-based yaml.v3 line and column into a byte offset.
 //
-// yaml.v3 counts columns in bytes rather than in characters, which matters the
-// moment a key or a value holds CJK or an emoji; the corpus has both, and the
-// test that walks every fixture is what holds this claim up.
+// The column counts characters, not bytes. That distinction is invisible until
+// something multi-byte sits earlier on the same line — a key written in
+// Cyrillic, a CJK value inside a flow mapping followed by another key — and
+// then every offset after it lands mid-character or short. This package
+// asserted the opposite for a while, in a comment claiming the corpus proved
+// it; the corpus has multi-byte values but no multi-byte keys, so the claim was
+// never tested at all. FuzzExtent produced "ӿ: 0" and settled it.
 func offsetIn(src []byte, line, column int) int {
 	pos := 0
+	// A byte-order mark at the start of what the parser was handed is stripped
+	// before it counts anything, so it has to be stepped over here too. This is
+	// the mark *inside* the block, which is degenerate — the one a real editor
+	// writes is at the start of the file and never reaches this function.
+	if bytes.HasPrefix(src, bom) {
+		pos = len(bom)
+	}
 	for l := 1; l < line; l++ {
-		i := bytes.IndexByte(src[pos:], '\n')
-		if i < 0 {
+		next := lineBreakAfter(src, pos)
+		if next < 0 {
 			return len(src)
 		}
-		pos += i + 1
+		pos = next
 	}
-	pos += column - 1
+	for c := 1; c < column && pos < len(src) && src[pos] != '\n'; c++ {
+		_, size := utf8.DecodeRune(src[pos:])
+		pos += size
+	}
 	if pos > len(src) {
 		return len(src)
 	}
 	return pos
+}
+
+// maxDepth bounds how far value and the extent scanner will walk into a
+// document.
+//
+// Frontmatter is a page of properties; nothing legitimate nests sixty-four
+// deep. The bound is not about legitimate files: a note is a file a user can be
+// sent, and "[[[[[..." repeated far enough is a stack overflow in any recursive
+// walker, which takes the whole process down rather than failing one parse.
+// FR-MD-034 says a bad block must not block the note, and a crash is the most
+// complete way to break that promise.
+const maxDepth = 64
+
+// lineBreakAfter returns the offset just past the line break that ends the line
+// starting at pos, or -1 if there is none.
+//
+// YAML ends a line with a line feed, a carriage return, or the pair — and
+// yaml.v3 numbers its lines that way, so a bare carriage return in the middle
+// of a block shifts every position after it by a line. Counting only line feeds
+// put an extent three characters into the wrong key, which is the kind of
+// mistake a writer turns into a damaged file. Found by FuzzExtent on
+// "---\n\r0:\n1: \n---".
+func lineBreakAfter(src []byte, pos int) int {
+	for i := pos; i < len(src); i++ {
+		switch src[i] {
+		case '\n':
+			return i + 1
+		case '\r':
+			if i+1 < len(src) && src[i+1] == '\n' {
+				return i + 2
+			}
+			return i + 1
+		}
+	}
+	return -1
 }
 
 // value converts a YAML node to a Go value.
@@ -114,19 +169,51 @@ func offsetIn(src []byte, line, column int) int {
 // FR-MD-031 gives Sherd date and datetime properties, and a note that says
 // 2026-08-22 means the day.
 func value(n *yaml.Node) any {
-	if n == nil {
+	return valueAt(n, map[*yaml.Node]bool{}, 0)
+}
+
+// valueAt walks a node, refusing to follow an alias back into something it is
+// already inside.
+//
+// An anchor that contains a reference to itself — "a: &x" holding "c: *x" — is
+// a cycle, and yaml.v3 hands it back as one: the alias node points at an
+// ancestor. Following it recurses until the stack runs out, which the fuzz
+// target demonstrated in about two seconds. The cycle resolves to nil, because
+// there is no finite Go value that is a map containing itself, and the file
+// itself is untouched either way.
+func valueAt(n *yaml.Node, expanding map[*yaml.Node]bool, depth int) any {
+	if n == nil || depth > maxDepth {
 		return nil
 	}
 	switch n.Kind {
 	case yaml.AliasNode:
-		return value(n.Alias)
-	case yaml.SequenceNode:
+		if n.Alias == nil {
+			return nil
+		}
+		return valueAt(n.Alias, expanding, depth+1)
+	case yaml.SequenceNode, yaml.MappingNode:
+		// A collection is marked while it is being walked, so an alias inside
+		// it that points back at it is recognised as the cycle it is rather
+		// than expanded one more time.
+		if expanding[n] {
+			return nil
+		}
+		expanding[n] = true
+		defer delete(expanding, n)
+		if n.Kind == yaml.MappingNode {
+			return mappingValue(n, expanding, depth)
+		}
 		out := make([]any, 0, len(n.Content))
 		for _, c := range n.Content {
-			out = append(out, value(c))
+			out = append(out, valueAt(c, expanding, depth+1))
 		}
 		return out
-	case yaml.MappingNode:
+	}
+	return scalar(n)
+}
+
+func mappingValue(n *yaml.Node, expanding map[*yaml.Node]bool, depth int) any {
+	{
 		out := make(map[string]any, len(n.Content)/2)
 		for i := 0; i+1 < len(n.Content); i += 2 {
 			k, v := n.Content[i], n.Content[i+1]
@@ -134,7 +221,7 @@ func value(n *yaml.Node) any {
 				// "<<: *defaults" means the anchored mapping's keys, not a key
 				// literally named "<<". A key already set here wins, which is
 				// what merging is for.
-				if merged, ok := value(v).(map[string]any); ok {
+				if merged, ok := valueAt(v, expanding, depth+1).(map[string]any); ok {
 					for mk, mv := range merged {
 						if _, taken := out[mk]; !taken {
 							out[mk] = mv
@@ -143,11 +230,10 @@ func value(n *yaml.Node) any {
 					continue
 				}
 			}
-			out[k.Value] = value(v)
+			out[k.Value] = valueAt(v, expanding, depth+1)
 		}
 		return out
 	}
-	return scalar(n)
 }
 
 func scalar(n *yaml.Node) any {

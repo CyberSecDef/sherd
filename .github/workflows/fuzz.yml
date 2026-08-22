@@ -35,13 +35,25 @@ env:
 
 jobs:
   fuzz:
-    name: ${{ matrix.target }}
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
       fail-fast: false
       matrix:
-        target: [FuzzParse, FuzzReparse]
+        include:
+          - name: markdown/FuzzParse
+            pkg: ./pkg/format/markdown/
+            target: FuzzParse
+          - name: markdown/FuzzReparse
+            pkg: ./pkg/format/markdown/
+            target: FuzzReparse
+          - name: frontmatter/FuzzParse
+            pkg: ./pkg/format/frontmatter/
+            target: FuzzParse
+          - name: frontmatter/FuzzExtent
+            pkg: ./pkg/format/frontmatter/
+            target: FuzzExtent
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -50,17 +62,17 @@ jobs:
           cache: true
           cache-dependency-path: go.sum
 
-      - name: Fuzz ${{ matrix.target }}
+      - name: Fuzz ${{ matrix.name }}
         run: |
           minutes="${{ github.event.inputs.minutes || '120' }}"
-          echo "fuzzing ${{ matrix.target }} for ${minutes}m"
-          go test ./pkg/format/markdown/ -run '^$' \
-            -fuzz '^${{ matrix.target }}$' -fuzztime "${minutes}m"
+          echo "fuzzing ${{ matrix.name }} for ${minutes}m"
+          go test ${{ matrix.pkg }} -run '^$' \
+            -fuzz '^${{ matrix.target }}$' -fuzztime "${minutes}m" -timeout 0
 
       - name: Keep the failing input
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-failure-${{ matrix.target }}
-          path: pkg/format/markdown/testdata/fuzz/
+          name: fuzz-failure-${{ matrix.target }}-${{ strategy.job-index }}
+          path: ${{ matrix.pkg }}testdata/fuzz/
           if-no-files-found: ignore

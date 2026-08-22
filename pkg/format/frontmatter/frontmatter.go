@@ -59,6 +59,10 @@ type Document struct {
 	// A document whose YAML did not parse has none, and Err says why.
 	Properties []Property
 
+	// root is the parsed mapping, kept so Extent can walk it without parsing
+	// the block a second time. It is nil when the block did not parse.
+	root *yamlNode
+
 	// Err is set when the block is not valid YAML. It is not fatal and the
 	// caller is expected to carry on: FR-MD-034 requires that a broken block
 	// never blocks the note, so Body is still there to render and to index.
@@ -217,10 +221,21 @@ func lineAt(src []byte, pos int) Range {
 	return Range{pos, len(src)}
 }
 
-// lineOf returns the 1-based line number of a byte offset in the source.
+// lineOf returns the 1-based line number of a byte offset in the source,
+// counting lines the way the YAML parser does so that a translated position
+// means the same thing in both.
 func (d *Document) lineOf(offset int) int {
 	if offset > len(d.Source) {
 		offset = len(d.Source)
 	}
-	return 1 + bytes.Count(d.Source[:offset], []byte("\n"))
+	line, at := 1, 0
+	for at < offset {
+		next := lineBreakAfter(d.Source[:offset], at)
+		if next < 0 {
+			break
+		}
+		line++
+		at = next
+	}
+	return line
 }

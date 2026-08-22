@@ -1,7 +1,7 @@
 # Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.5)
-**Plan version:** 1.8
+**Plan version:** 1.9
 **Status:** Ready for execution
 **Phase numbering:** `P0`…`P7` deliberately mirror the phase table in
 `REQUIREMENT_SPEC.md` §25 and must not be renumbered. **Phase B** is the extra
@@ -292,8 +292,8 @@ in pieces first, each with an exit criterion that names what to run, so
 | # | Sub-step | Status |
 |---|---|---|
 | **P0.2.1** | Read path and the fixture corpus | ✅ |
-| **P0.2.2** | The extent scanner | ⬅️ **next** |
-| **P0.2.3** | The surgical writer | ⬜ |
+| **P0.2.2** | The extent scanner | ✅ |
+| **P0.2.3** | The surgical writer | ⬅️ **next** |
 | **P0.2.4** | Property types and the vault registry | ⬜ |
 | **P0.2.5** | The property test and the phase gate | ⬜ |
 
@@ -355,16 +355,72 @@ with a local key winning — which is what a decoder does, but it means a caller
 reading `prod` cannot see which keys were inherited. Neither affects the write
 path, which never re-serializes anything.
 
-#### P0.2.2 The extent scanner
+#### P0.2.2 The extent scanner ✅
 - Given a key, the exact byte range of its value: block scalars (`|`, `>`, `|+`,
   `|-`), nested maps, block and flow sequences, anchors and merge keys, and the
   comments and blank lines at a block's edges.
 - This is the piece the `OD-004` prototype got wrong — 12 of 197 fixtures, all
   one cause — and the ADR names it the real work of this step. `yaml.Node` gives
   a start position and no end, so the extent is computed rather than read off.
-- **Done when:** for every key of every fixture, replacing the computed extent
-  with the bytes already there reproduces the file exactly. That is a test the
-  scanner cannot pass by being approximately right.
+- **Done when:** replacing any key's extent with a sentinel leaves a document
+  that still parses, whose key now reads as the sentinel, and every one of whose
+  other keys is unchanged.
+
+*The exit criterion was rewritten before the step started.* It had said
+"replacing the computed extent with the bytes already there reproduces the file
+exactly", which is true of **any** range — including a range covering nothing,
+or the whole block — and so tests nothing at all. A criterion that cannot fail
+is worse than none, because it looks like evidence.
+
+**Delivered.** `go test ./pkg/format/frontmatter/ -v`:
+
+| Exit criterion | Status | Evidence |
+|---|---|---|
+| Every key's extent covers exactly its value | ✅ | `spliced 419 values, skipped 2 anchored ones` over 215 fixtures, top-level keys and nested paths. An extent that stops short leaves debris, so the block fails to parse or the key reads back wrong; one that runs long eats a comment, a blank line, or the next key, so another property changes or vanishes. Both directions fail the test. |
+| Boundary shapes are pinned individually | ✅ | 31 named cases: comments, quoting, escapes, all four chomping modes, explicit indentation indicators, nested maps, block and flow collections, tags, aliases, multi-line plain scalars, keys with no value. A corpus failure says which of 200 files; these say which rule. |
+| The scanner is fuzzed | ✅ | `FuzzExtent` and `FuzzParse` land with the scanner, per X.1.3's rule that a parser gets a target the day it does. The scanner ran 20 minutes clean at the end — 86.5 M executions, 177 new interesting inputs — after eighteen minutes spread over the day found ten defects. Twenty-three of those inputs are committed as seeds, so each one is a permanent regression test, and both targets joined `make fuzz`, the CI smoke job, and the nightly matrix. The reader's own target ran 8 minutes clean over the same code. |
+| Coverage stays over the `QA-001` floor | ✅ | `make cover` → `pkg/format 95.5%`. |
+
+*What the fuzz target found, in the order it found it.* The corpus said the
+scanner was right. Eighteen minutes of `FuzzExtent` said otherwise, and the list
+is the argument for X.1.3's rule that a parser gets a target the day it lands.
+
+| # | Finding | Consequence had it shipped |
+|---|---|---|
+| 1 | An unterminated quote inside a flow sequence ran the scan past the end of the block | A range covering the closing `---` and the note under it |
+| 2 | A plain scalar continuing across a blank line stopped at the blank | Half the value replaced, the rest stranded in the file |
+| 3 | **`yaml.v3` columns count characters, not bytes** | Every offset on a line holding a multi-byte key landed mid-character |
+| 4 | A bare carriage return is a line break to `yaml.v3` and was not to us | An extent three characters into the wrong key |
+| 5 | An explicit indentation indicator (`\|2`) was ignored | A block scalar swallowing the key beneath it |
+| 6 | A block scalar's body indent was inferred from a line that is not indented past its key | The same, for `a: \|` followed by another key |
+| 7 | A recursive anchor — `&x` holding `*x` — walked forever | **A stack overflow: the process, not the parse** |
+| 8 | `yaml.v3` positions an unwritten value wherever its scanner stopped, sometimes inside a comment | A writer editing the author's note instead of the property |
+| 9 | The separating colon was taken as the first on the line | `? :00` handing back the key's own characters as the place to write |
+| 10 | A plain *key* was scanned like a value and ran onto the next line | The key swallowing its own value |
+
+Number 3 is the one worth remembering. It was not a scanner bug at all — it was
+in P0.2.1's offset mapping, shipped the day before, under a comment asserting
+the opposite and claiming the corpus proved it. The corpus has CJK and RTL
+*values* and no multi-byte *keys*, so nothing before a value was ever more than
+one byte wide and the claim was never tested. `FuzzExtent` produced `ӿ: 0`.
+
+Number 7 is the one worth acting on: it is a crash, on a file a user can be
+sent, in a package whose requirement (`FR-MD-034`) is that a bad block must not
+block the note. Walks are now depth-bounded and cycle-aware.
+
+*What P0.2.3 inherits.* Three shapes where the extent is right and a naive
+splice is not, each recorded in the tests rather than left to be rediscovered:
+
+- **Insertion needs placement rules.** Only `key: <here>` can be written by
+  splicing. YAML's explicit `? key` form, a key whose key is itself a
+  collection, and a key with no value inside a flow mapping all need a colon or
+  a line written too.
+- **A value can fuse with what follows it.** `tags: [0]#000` and `a: #note` both
+  put a `#` where a replacement would touch it, and `SENTINEL#000` is a value
+  nobody asked for. The writer keeps a space, quotes, or refuses.
+- **Replacing an anchored value removes the anchor.** Every alias to it stops
+  resolving, and the block stops parsing. The writer decides: refuse, or keep
+  the anchor and replace only what follows it.
 
 #### P0.2.3 The surgical writer
 - Set an existing key by splicing its extent (ADR 0004). The block is never

@@ -303,3 +303,56 @@ func TestALineThatOnlyLooksLikeADelimiter(t *testing.T) {
 		}
 	}
 }
+
+// TestARecursiveAnchorDoesNotCrash. "a: &x" holding "c: *x" is a cycle, and
+// yaml.v3 hands it back as one — the alias node points at its own ancestor.
+// Walking it took the process down with a stack overflow, found by FuzzExtent
+// about two seconds after that target first existed.
+//
+// A note is a file a user can be sent. FR-MD-034 says a broken block must not
+// block the note, and a crash breaks that promise more completely than any
+// parse error can.
+func TestARecursiveAnchorDoesNotCrash(t *testing.T) {
+	src, err := os.ReadFile(filepath.Join(corpusRoot, "read/recursive-anchor.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := frontmatter.Parse(src)
+
+	if d.Err != nil {
+		t.Fatalf("Err = %v: the block is valid YAML, however odd", d.Err)
+	}
+	m, ok := get(t, d, "a").(map[string]any)
+	if !ok {
+		t.Fatalf("a = %#v, want a map", get(t, d, "a"))
+	}
+	if m["c"] != nil {
+		t.Errorf("a.c = %#v, want nil: the cycle has no finite value", m["c"])
+	}
+	if !strings.Contains(string(d.Text(d.Body)), "refers to itself") {
+		t.Errorf("body was lost: %q", d.Text(d.Body))
+	}
+}
+
+// TestDeepNestingIsBounded. The same shape without an anchor: nesting deep
+// enough to exhaust the stack. The bound is what keeps a walk over a hostile
+// file from taking the process with it.
+func TestDeepNestingIsBounded(t *testing.T) {
+	var b strings.Builder
+	b.WriteString("---\na: ")
+	const depth = 5000
+	b.WriteString(strings.Repeat("[", depth))
+	b.WriteString(strings.Repeat("]", depth))
+	b.WriteString("\n---\nbody\n")
+
+	d := frontmatter.Parse([]byte(b.String()))
+	if d.Err != nil {
+		return // the parser refused it first, which is also a fine answer
+	}
+	if _, ok := d.Get("a"); !ok {
+		t.Error("a is missing")
+	}
+	if _, ok := d.Extent("a"); !ok {
+		t.Error("no extent for a")
+	}
+}
