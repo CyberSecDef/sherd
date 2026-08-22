@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Generate THIRD-PARTY-LICENSES.md from the module graph (LEG-006) and fail on
 # any license that is not GPL-3.0-compatible (LEG-005).
@@ -11,8 +11,8 @@
 #                                                      an incompatible license
 #
 # Two environment variables exist for the self-test and are not used in normal
-# operation: GRANITE_LICENSE_CSV supplies a fixture in place of running
-# go-licenses, and GRANITE_LICENSE_OUT redirects the generated file.
+# operation: SHERD_LICENSE_CSV supplies a fixture in place of running
+# go-licenses, and SHERD_LICENSE_OUT redirects the generated file.
 #
 # Output is deterministic: entries are sorted and no timestamp is embedded.
 
@@ -21,7 +21,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-out="${GRANITE_LICENSE_OUT:-THIRD-PARTY-LICENSES.md}"
+out="${SHERD_LICENSE_OUT:-THIRD-PARTY-LICENSES.md}"
 check=false
 [[ "${1:-}" == "--check" ]] && check=true
 
@@ -31,8 +31,8 @@ if [[ "${1:-}" == "--self-test" ]]; then
 	trap 'rm -f "$tmp_out"' EXIT
 
 	echo "self-test: compatible licenses must pass"
-	if GRANITE_LICENSE_CSV=testdata/ci/licenses-clean.csv \
-	   GRANITE_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
+	if SHERD_LICENSE_CSV=testdata/ci/licenses-clean.csv \
+	   SHERD_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
 		echo "  ✓ accepted MIT, Apache-2.0, BSD-3-Clause, ISC, MPL-2.0"
 	else
 		echo "  ✗ FAILED: rejected a GPL-3.0-compatible license" >&2
@@ -40,8 +40,8 @@ if [[ "${1:-}" == "--self-test" ]]; then
 	fi
 
 	echo "self-test: incompatible licenses must fail"
-	if GRANITE_LICENSE_CSV=testdata/ci/licenses-incompatible.csv \
-	   GRANITE_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
+	if SHERD_LICENSE_CSV=testdata/ci/licenses-incompatible.csv \
+	   SHERD_LICENSE_OUT="$tmp_out" "$0" >/dev/null 2>&1; then
 		echo "  ✗ FAILED: accepted a GPL-3.0-incompatible license" >&2
 		rc=1
 	else
@@ -53,7 +53,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
 fi
 
 gobin="$(go env GOPATH)/bin"
-if [[ -z "${GRANITE_LICENSE_CSV:-}" && ! -x "$gobin/go-licenses" ]]; then
+if [[ -z "${SHERD_LICENSE_CSV:-}" && ! -x "$gobin/go-licenses" ]]; then
 	echo "go-licenses not found in $gobin — run 'make tools'" >&2
 	exit 1
 fi
@@ -70,9 +70,9 @@ allowed=(
 csv="$(mktemp)"
 trap 'rm -f "$csv"' EXIT
 
-if [[ -n "${GRANITE_LICENSE_CSV:-}" ]]; then
+if [[ -n "${SHERD_LICENSE_CSV:-}" ]]; then
 	# Self-test path: read a fixture instead of scanning the module graph.
-	grep -vE '^\s*(#|$)' "$GRANITE_LICENSE_CSV" | LC_ALL=C sort > "$csv"
+	grep -vE '^\s*(#|$)' "$SHERD_LICENSE_CSV" | LC_ALL=C sort > "$csv"
 else
 	# go-licenses writes progress to stderr; only stdout is data.
 	"$gobin/go-licenses" csv ./... 2>/dev/null | LC_ALL=C sort > "$csv" || true
@@ -82,7 +82,7 @@ incompatible=()
 while IFS=, read -r module url license; do
 	[[ -z "${module:-}" ]] && continue
 	# The module under audit is our own code, not a third-party component.
-	[[ "$module" == github.com/CyberSecDef/granite* ]] && continue
+	[[ "$module" == github.com/CyberSecDef/sherd* ]] && continue
 	ok=false
 	for a in "${allowed[@]}"; do
 		[[ "$license" == "$a" ]] && ok=true && break
@@ -95,7 +95,7 @@ tmp="$(mktemp)"
 	cat <<'HEADER'
 # Third-Party Licenses
 
-Every third-party component linked into Granite, with its license. Granite is
+Every third-party component linked into Sherd, with its license. Sherd is
 distributed under GPL-3.0-or-later; every license listed here is compatible with
 those terms (`LEG-005`). This file ships in every release artifact (`LEG-006`).
 
@@ -104,13 +104,13 @@ adding or removing a dependency.
 
 HEADER
 
-	if [[ ! -s "$csv" ]] || [[ -z "$(grep -v '^github.com/CyberSecDef/granite' "$csv" || true)" ]]; then
+	if [[ ! -s "$csv" ]] || [[ -z "$(grep -v '^github.com/CyberSecDef/sherd' "$csv" || true)" ]]; then
 		cat <<'EMPTY'
 ## Components
 
 _None._
 
-Granite currently has no third-party dependencies. This is the desired steady
+Sherd currently has no third-party dependencies. This is the desired steady
 state for the core: prefer the standard library, and add a dependency only when
 it earns its place (see CONTRIBUTING.md §5).
 EMPTY
@@ -121,7 +121,7 @@ EMPTY
 		echo "|---|---|---|"
 		while IFS=, read -r module url license; do
 			[[ -z "${module:-}" ]] && continue
-			[[ "$module" == github.com/CyberSecDef/granite* ]] && continue
+			[[ "$module" == github.com/CyberSecDef/sherd* ]] && continue
 			echo "| \`$module\` | $license | ${url:-—} |"
 		done < "$csv"
 	fi

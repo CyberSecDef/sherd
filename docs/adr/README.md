@@ -1,5 +1,10 @@
 # Architecture Decision Records
 
+> **Records 0001–0007 predate the project's rename** and refer to it by its
+> original codename, `granite`. They are left unedited on purpose: an ADR is a
+> record of what was decided and why *at the time*, and rewriting history to
+> match the present defeats the point. See [0008](0008-project-name-sherd.md).
+
 One file per decision, numbered, immutable once accepted. A decision that
 turns out to be wrong is **superseded** by a new record rather than edited —
 the history of what we believed, and why, is the point.
@@ -14,7 +19,8 @@ the history of what we believed, and why, is the point.
 | [0004](0004-frontmatter-round-trip.md) | Frontmatter round-trip (`OD-004`) | Accepted |
 | [0005](0005-crdt-library.md) | CRDT library (`OD-005`) | Accepted |
 | [0006](0006-plugin-js-runtime.md) | Plugin JavaScript runtime (`OD-006`) | Accepted |
-| [0007](0007-project-name.md) | Project name and trademark (`OD-007`) | Accepted — **rename required before release** |
+| [0007](0007-project-name.md) | Project name and trademark (`OD-007`) | Accepted — superseded by [0008](0008-project-name-sherd.md) |
+| [0008](0008-project-name-sherd.md) | The project is named **Sherd** (`OD-007`) | Accepted |
 
 ## Writing one
 

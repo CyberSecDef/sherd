@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Fetch the QuickJS WASI build used by the OD-006 benchmark, verifying its
-# checksum. The binary is deliberately not committed: Granite does not vendor
+# checksum. The binary is deliberately not committed: Sherd does not vendor
 # third-party binaries, and this one is a benchmark input, not a dependency.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
-# Granite's quality gates (QA-011, LEG-005, NFR-SEC-001, NFR-SEC-009,
+# Sherd's quality gates (QA-011, LEG-005, NFR-SEC-001, NFR-SEC-009,
 # NFR-PLAT-001, NFR-PLAT-002, ARC-MOD-002, FR-MOB-001).
 #
 # The Go toolchain is pinned so builds are reproducible over time. A separate
@@ -175,14 +175,14 @@ jobs:
           cache-dependency-path: go.mod
 
       - name: Build a static linux/amd64 binary
-        run: go build -trimpath -o granite-static ./cmd/granite
+        run: go build -trimpath -o sherd-static ./cmd/sherd
 
       - name: It must be statically linked
         run: |
-          file granite-static
-          if ldd granite-static 2>&1 | grep -qv 'not a dynamic executable'; then
+          file sherd-static
+          if ldd sherd-static 2>&1 | grep -qv 'not a dynamic executable'; then
             echo "✗ binary is dynamically linked; CGO leaked into the build (NFR-PLAT-002)" >&2
-            ldd granite-static || true
+            ldd sherd-static || true
             exit 1
           fi
           echo "✓ statically linked"
@@ -190,8 +190,8 @@ jobs:
       - name: It must run on musl (Alpine), not only glibc (NFR-PLAT-001)
         run: |
           # The stub exits 1 by design, so assert on its output, not its status.
-          out=$(docker run --rm -v "$PWD/granite-static:/granite-static:ro" \
-                  alpine:latest /granite-static 2>&1 || true)
+          out=$(docker run --rm -v "$PWD/sherd-static:/sherd-static:ro" \
+                  alpine:latest /sherd-static 2>&1 || true)
           echo "$out"
           case "$out" in
             *"not implemented"*) echo "✓ ran under musl" ;;
@@ -264,7 +264,7 @@ jobs:
         run: |
           build() {
             go build -trimpath -buildvcs=false -ldflags='-buildid=' \
-              -o "$1" ./cmd/granited
+              -o "$1" ./cmd/sherdd
           }
           build a.bin
           build b.bin

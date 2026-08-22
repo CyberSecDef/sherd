@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Reproduces the OD-001 findings. See FINDINGS.md for recorded output.
 set -uo pipefail

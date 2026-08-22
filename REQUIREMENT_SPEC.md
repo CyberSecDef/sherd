@@ -1,9 +1,9 @@
 # Requirements Specification — Open-Source Local-First PKM Application
 
-**Codename:** `granite` (placeholder — do not ship under any name resembling an existing trademark)
+**Name:** `sherd` (chosen 2026-08-21; see ADR 0008. Preliminary screening only — `LEG-003` still requires a legal clearance before public release)
 **Target language:** Go 1.23+
 **Target license:** GPL-3.0-or-later
-**Document version:** 1.1 (see Appendix B for the change log)
+**Document version:** 1.2 (see Appendix B for the change log)
 **Status:** Draft for implementation handoff
 **Audience:** Implementing engineer / agentic coding session
 
@@ -86,8 +86,8 @@ A local-first, plain-text personal knowledge management application: Markdown ed
 | NFR-PERF-007 | Idle RSS with 5 open panes: ≤ 400 MB. Idle CPU: < 0.5% of one core. |
 | NFR-PERF-008 | Graph view: ≥ 30 fps interactive pan/zoom at 5,000 visible nodes; degrade gracefully with node capping and LOD above that. |
 | NFR-PERF-009 | Editor MUST use virtualized rendering; memory MUST NOT scale with note length beyond the document buffer itself. |
-| NFR-PERF-010 | Index database size budget, measured against vault text size. **Total index SHOULD NOT exceed 40%.** The **positional (phrase-capable) component SHOULD NOT exceed 10%**, because that component is what grows fastest with vocabulary and is the part a mobile client (§22) and a sync transfer can least afford. A build that exceeds either figure MUST report it in `granite doctor` rather than fail. *Superseded the original flat 25% figure in v1.1; see Appendix B and ADR 0002.* |
-| NFR-PERF-011 | Index size MUST be measurable and reportable per component (positional, non-positional, structured tables) so that a regression is attributable rather than merely visible. `granite doctor` and the diagnostics panel (FR-OBS-003) MUST both surface it. |
+| NFR-PERF-010 | Index database size budget, measured against vault text size. **Total index SHOULD NOT exceed 40%.** The **positional (phrase-capable) component SHOULD NOT exceed 10%**, because that component is what grows fastest with vocabulary and is the part a mobile client (§22) and a sync transfer can least afford. A build that exceeds either figure MUST report it in `sherd doctor` rather than fail. *Superseded the original flat 25% figure in v1.1; see Appendix B and ADR 0002.* |
+| NFR-PERF-011 | Index size MUST be measurable and reportable per component (positional, non-positional, structured tables) so that a regression is attributable rather than merely visible. `sherd doctor` and the diagnostics panel (FR-OBS-003) MUST both surface it. |
 
 ### 3.2 Reliability & data safety
 
@@ -161,7 +161,7 @@ Split into a headless **core daemon** and a thin **presentation layer**. This is
                   loopback TCP with token auth
                             │
 ┌───────────────────────────┴─────────────────────────────┐
-│  Core daemon (granited)                                  │
+│  Core daemon (sherdd)                                  │
 │  ┌──────────┐ ┌──────────┐ ┌─────────┐ ┌─────────────┐  │
 │  │ Vault    │ │ Parser   │ │ Index   │ │ Query       │  │
 │  │ (fs,     │ │ (goldmark│ │ (SQLite │ │ (search,    │  │
@@ -201,16 +201,16 @@ The editor is the hardest part. Go has no mature rich-text editing widget. Three
 | ARC-UI-001 | Default desktop client: OS webview hosting a GPL-licensed frontend built on CodeMirror 6. All frontend source ships in the repo; no minified-only artifacts. |
 | ARC-UI-002 | The webview MUST load only from an embedded local origin. Remote origins MUST be blocked at the navigation handler. CSP MUST forbid `unsafe-eval` and remote script. |
 | ARC-UI-003 | The frontend MUST NOT contain business logic. It renders state and dispatches commands over IPC. Any logic in the frontend must be reimplementable by a TUI client. |
-| ARC-UI-004 | A `granite serve` mode MUST expose the same frontend over loopback HTTP with token auth, enabling browser and remote-desktop use. |
+| ARC-UI-004 | A `sherd serve` mode MUST expose the same frontend over loopback HTTP with token auth, enabling browser and remote-desktop use. |
 
 ### 4.3 Go module layout
 
 ```
-granite/
+sherd/
 ├── cmd/
-│   ├── granite/          # unified CLI + GUI launcher
-│   ├── granited/         # headless daemon
-│   └── granite-tui/      # terminal client
+│   ├── sherd/          # unified CLI + GUI launcher
+│   ├── sherdd/         # headless daemon
+│   └── sherd-tui/      # terminal client
 ├── internal/
 │   ├── vault/            # fs abstraction, watcher, atomic io, trash
 │   ├── mdast/            # goldmark extensions, AST, positions
@@ -250,7 +250,7 @@ granite/
 | ID | Requirement |
 |---|---|
 | FR-VLT-001 | Open a vault by selecting any directory. If no config dir exists, create one; the directory need not be empty. |
-| FR-VLT-002 | Config dir default `.granite/` at vault root, name configurable at creation (some users need a non-dotted name for cloud-sync tools that ignore dotfiles). Store the chosen name in the app-level vault registry. |
+| FR-VLT-002 | Config dir default `.sherd/` at vault root, name configurable at creation (some users need a non-dotted name for cloud-sync tools that ignore dotfiles). Store the chosen name in the app-level vault registry. |
 | FR-VLT-003 | Maintain an app-level registry of known vaults: path, display name, last opened, opened-count, per-vault flags. Registry lives in app config, not in any vault. |
 | FR-VLT-004 | Refuse to open a vault nested inside another registered vault, or containing one, unless the user explicitly overrides (warn about double-indexing). |
 | FR-VLT-005 | Refuse to open `$HOME`, `/`, `C:\`, or any path with > 250,000 files without explicit confirmation and a scan-size preview. |
@@ -266,7 +266,7 @@ granite/
 | FR-VLT-012 | SVG rendering MUST be sanitized (strip `<script>`, `on*` handlers, external `<use>`/`<image>` refs) — SVG is an executable format. |
 | FR-VLT-013 | Unknown file types are listed, movable, renamable, linkable, and openable in the OS default handler, but not rendered. |
 | FR-VLT-014 | Files and directories whose names begin with `.` are hidden by default and excluded from indexing, with a per-vault toggle. |
-| FR-VLT-015 | Per-vault exclusion patterns (gitignore syntax, `.graniteignore` at vault root plus a settings list). Excluded paths are not indexed, not searched, not shown, not watched. |
+| FR-VLT-015 | Per-vault exclusion patterns (gitignore syntax, `.sherdignore` at vault root plus a settings list). Excluded paths are not indexed, not searched, not shown, not watched. |
 | FR-VLT-016 | Binary detection: a file is binary if it contains a NUL byte in the first 8 KB or fails UTF-8 validation. Never open a binary as text without confirmation. |
 | FR-VLT-017 | Encoding: read and write UTF-8. Detect and offer conversion for UTF-8 BOM, UTF-16LE/BE (BOM only), and Latin-1 fallback. Preserve the file's existing line endings (CRLF vs LF) on write; do not normalize. |
 
@@ -340,7 +340,7 @@ granite/
 |---|---|
 | FR-MD-030 | YAML 1.2 frontmatter delimited by `---` on line 1 and a closing `---`. Parse with a YAML 1.2 library configured to *disable* the YAML 1.1 boolean footgun (`no`/`off`/`yes`/`on` must stay strings unless explicitly typed). |
 | FR-MD-031 | Property types: `text`, `number`, `checkbox`, `date` (RFC 3339 date), `datetime` (RFC 3339), `list` (of text), `tags` (list, merged with inline tags), `aliases` (list), `cssclasses` (list), and `link`/`list-of-link` (values containing wikilinks). |
-| FR-MD-032 | A vault-level property type registry (`.granite/types.json`) records the declared type per property key; inference is used when undeclared. Type mismatches surface as warnings, never as data loss. |
+| FR-MD-032 | A vault-level property type registry (`.sherd/types.json`) records the declared type per property key; inference is used when undeclared. Type mismatches surface as warnings, never as data loss. |
 | FR-MD-033 | Writing frontmatter MUST preserve key order, comments, quoting style, and indentation of untouched keys. Use a round-trip-preserving YAML approach (custom, or a fork of `yaml.v3` node API with comment retention). **Non-negotiable — round-trip mangling is a top user complaint in this category.** |
 | FR-MD-034 | Invalid YAML MUST NOT block the note. Show a non-blocking error banner with line/column; the note body still renders and indexes. |
 | FR-MD-035 | Reserved/behavioral properties: `aliases` (alternate link targets), `tags`, `cssclasses` (apply CSS classes to the note view), `publish` (export inclusion), `permalink`, `direction` (`ltr`/`rtl`), `banner`-style keys left to plugins. |
@@ -820,7 +820,7 @@ net:        fetch(request)            — capability-gated
 | FR-CFG-003 | Config MUST be schema-validated on load. Unknown keys are preserved (forward compatibility), invalid values are reset to default with a logged warning — never a hard failure. |
 | FR-CFG-004 | Config migrations are versioned and idempotent, with an automatic pre-migration backup. |
 | FR-CFG-005 | Full settings export/import as a single archive, for cloning a setup across machines. |
-| FR-CFG-006 | Every setting MUST be reachable from the CLI (`granite config get|set|list`) and from IPC. |
+| FR-CFG-006 | Every setting MUST be reachable from the CLI (`sherd config get|set|list`) and from IPC. |
 | FR-CFG-007 | Settings UI MUST have a search box covering setting names, descriptions, and the plugin that owns them. |
 
 ---
@@ -912,7 +912,7 @@ Design the editor buffer around a CRDT-compatible abstraction now (CM6 + Yjs, or
 
 | ID | Requirement |
 |---|---|
-| FR-CLI-001 | A single binary `granite` operating against a running daemon or, with `--standalone`, directly on a vault. |
+| FR-CLI-001 | A single binary `sherd` operating against a running daemon or, with `--standalone`, directly on a vault. |
 | FR-CLI-002 | Every command MUST support `--format json` with a stable, documented schema, and MUST use exit codes meaningfully (0 success, 1 general error, 2 usage, 3 not found, 4 conflict). |
 | FR-CLI-003 | Commands MUST be pipe-friendly: read from stdin where sensible, write plain output to stdout, diagnostics to stderr, and honor `NO_COLOR`. |
 | FR-CLI-004 | Shell completions for bash, zsh, fish, PowerShell. |
@@ -920,38 +920,38 @@ Design the editor buffer around a CRDT-compatible abstraction now (CM6 + Yjs, or
 ### 21.1 Command surface
 
 ```
-granite vault list|open|close|info|reindex|verify
-granite ls [--sort mtime] [--limit N] [--format json]
-granite read <note> [--section H] [--block ^id] [--raw|--rendered]
-granite write <note> [--content -] [--append|--prepend|--overwrite]
-granite create <note> [--template T] [--property k=v]...
-granite rename <old> <new> [--update-links]
-granite rm <note> [--trash|--permanent]
-granite search <query> [--limit N] [--context N] [--format json]
-granite replace <query> <replacement> [--dry-run] [--regex]
-granite daily [open|append|read] [--offset -1]
-granite links <note> [--in|--out|--unresolved]
-granite graph [--from N] [--depth D] [--format dot|json|graphml]
-granite tags [list|counts|rename <old> <new>]
-granite props [list|get <note>|set <note> <k> <v>|types]
-granite tasks [<note>] [--status todo|done|all] [--format json]
-granite base run <file.base> [--view NAME] [--format json|csv|md]
-granite canvas [list|add-node|add-edge|export]
-granite template apply <template> <note>
-granite publish build [--out DIR] [--incremental]
-granite sync [status|now|pause|resume|conflicts|resolve]
-granite sync headless --vault PATH --daemon
-granite plugin [list|install|enable|disable|reload|caps|log]
-granite config [get|set|list|export|import]
-granite history [list <note>|diff <note> <v>|restore <note> <v>]
-granite export <note> --to pdf|html|docx|epub
-granite serve [--addr 127.0.0.1:7777]
-granite doctor            # diagnose index, permissions, watchers, config
+sherd vault list|open|close|info|reindex|verify
+sherd ls [--sort mtime] [--limit N] [--format json]
+sherd read <note> [--section H] [--block ^id] [--raw|--rendered]
+sherd write <note> [--content -] [--append|--prepend|--overwrite]
+sherd create <note> [--template T] [--property k=v]...
+sherd rename <old> <new> [--update-links]
+sherd rm <note> [--trash|--permanent]
+sherd search <query> [--limit N] [--context N] [--format json]
+sherd replace <query> <replacement> [--dry-run] [--regex]
+sherd daily [open|append|read] [--offset -1]
+sherd links <note> [--in|--out|--unresolved]
+sherd graph [--from N] [--depth D] [--format dot|json|graphml]
+sherd tags [list|counts|rename <old> <new>]
+sherd props [list|get <note>|set <note> <k> <v>|types]
+sherd tasks [<note>] [--status todo|done|all] [--format json]
+sherd base run <file.base> [--view NAME] [--format json|csv|md]
+sherd canvas [list|add-node|add-edge|export]
+sherd template apply <template> <note>
+sherd publish build [--out DIR] [--incremental]
+sherd sync [status|now|pause|resume|conflicts|resolve]
+sherd sync headless --vault PATH --daemon
+sherd plugin [list|install|enable|disable|reload|caps|log]
+sherd config [get|set|list|export|import]
+sherd history [list <note>|diff <note> <v>|restore <note> <v>]
+sherd export <note> --to pdf|html|docx|epub
+sherd serve [--addr 127.0.0.1:7777]
+sherd doctor            # diagnose index, permissions, watchers, config
 ```
 
 | ID | Requirement |
 |---|---|
-| FR-CLI-010 | `granite sync headless` MUST run with no display server and no GUI dependency — a server-side vault replica for backup, CI, and agent workflows. |
+| FR-CLI-010 | `sherd sync headless` MUST run with no display server and no GUI dependency — a server-side vault replica for backup, CI, and agent workflows. |
 | FR-CLI-011 | An MCP (Model Context Protocol) server mode MUST be provided so agentic tools can read/search/write a vault under the same capability model as plugins, with a per-session capability grant and an audit log. Default: read-only. |
 | FR-CLI-012 | The daemon MUST NOT be startable with agent access enabled without an explicit flag and a logged consent record. |
 
@@ -972,7 +972,7 @@ granite doctor            # diagnose index, permissions, watchers, config
 | ID | Requirement |
 |---|---|
 | FR-OBS-001 | Structured logging (`log/slog`) with levels, written to a rotating local file. Logs MUST NOT contain note content or file paths above INFO level by default. |
-| FR-OBS-002 | `granite doctor`: checks index integrity, watcher health, inotify limits, permissions, config validity, plugin health, disk space, and clock skew — with actionable remedies. |
+| FR-OBS-002 | `sherd doctor`: checks index integrity, watcher health, inotify limits, permissions, config validity, plugin health, disk space, and clock skew — with actionable remedies. |
 | FR-OBS-003 | An in-app diagnostics panel: index stats, memory, open handles, plugin timings, slow-query log. |
 | FR-OBS-004 | `pprof` endpoints available on the daemon behind an explicit flag, loopback-only. |
 | FR-OBS-005 | Crash reports written locally only. Any upload is opt-in per-report with a full preview of what would be sent. |
@@ -1002,7 +1002,7 @@ granite doctor            # diagnose index, permissions, watchers, config
 
 | Phase | Scope | Exit criterion |
 |---|---|---|
-| **P0 — Foundation** | `pkg/format` (Markdown + extensions + frontmatter round-trip), vault layer, atomic IO, watcher, index schema, CLI skeleton | `granite search` works on a 20k-note vault from the terminal; conformance corpus green |
+| **P0 — Foundation** | `pkg/format` (Markdown + extensions + frontmatter round-trip), vault layer, atomic IO, watcher, index schema, CLI skeleton | `sherd search` works on a 20k-note vault from the terminal; conformance corpus green |
 | **P1 — Core app** | Daemon + IPC, webview shell, CM6 editor, three modes, file explorer, quick switcher, command palette, backlinks, outline, tags | Daily-driver capable for a single user, single device |
 | **P2 — Structure** | Graph view, canvas, properties, daily notes, templates, bookmarks, workspaces, search-and-replace | Feature parity with the reference product's core plugin set |
 | **P3 — Extensibility** | Plugin host (WASM), capability broker, SDK, theme token system, snippets, settings UI | A third party ships a working plugin from published docs alone |
@@ -1033,13 +1033,23 @@ granite doctor            # diagnose index, permissions, watchers, config
 2. Build `pkg/format`: goldmark extensions for FR-MD-010…028, with the conformance corpus (QA-002) growing alongside. **Do not proceed to the daemon until frontmatter round-trip (FR-MD-033) is byte-exact on a 200-file fixture set.**
 3. Build `internal/vault`: atomic write, trash, watcher with debounce and rename detection, exclusion patterns.
 4. Build `internal/index` with the §8.2 schema, incremental indexer, and the performance harness for NFR-PERF-003.
-5. Build the §9 query parser against the EBNF, fuzz it, and ship `granite search`.
+5. Build the §9 query parser against the EBNF, fuzz it, and ship `sherd search`.
 
 At that point you have a useful tool with zero UI, and every subsequent layer is additive.
 
 ---
 
 ## Appendix B — Change log
+
+### v1.2 — 2026-08-21
+
+The project codename `granite` is retired; the project is named **Sherd**
+(ADR 0008). Module paths, binary names, the vault config directory (`.sherd/`),
+and the ignore file (`.sherdignore`) change accordingly. No requirement changed.
+
+`LEG-003` remains open: screening was public-source research, not an
+authoritative register query, so a legal clearance is still required before
+public release.
 
 ### v1.1 — 2026-08-21
 

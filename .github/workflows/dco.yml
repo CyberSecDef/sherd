@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Enforce the Developer Certificate of Origin on every commit in a pull request
 # (LEG-007). See CONTRIBUTING.md section 2.
@@ -60,7 +60,7 @@ jobs:
 
           ✗ One or more commits are missing a Signed-off-by trailer.
 
-          Granite requires a Developer Certificate of Origin sign-off on every
+          Sherd requires a Developer Certificate of Origin sign-off on every
           commit (LEG-007). To fix your branch:
 
               git rebase --signoff main

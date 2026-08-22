@@ -1,7 +1,7 @@
 //go:build ignore
 
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Generates the 200-file frontmatter fixture corpus for OD-004.
 //
@@ -61,7 +61,7 @@ var handwritten = map[string]string{
 	"quoted-key":          "---\n\"quoted key\": value\n'single key': value\n---\nbody\n",
 	"multi-doc-marker":    "---\ntitle: Hello\n---\nbody with --- inside\n",
 	"no-trailing-newline": "---\ntitle: Hello\n---\nbody",
-	"granite-realistic":   "---\ntitle: Meeting notes\naliases:\n  - standup\n  - daily\ntags: [work, meeting]\ncreated: 2026-08-21\ncssclasses:\n  - wide\npublish: false\n# reviewed by RW\nstatus: draft\n---\n\n# Meeting notes\n\nBody text with [[a link]].\n",
+	"sherd-realistic":     "---\ntitle: Meeting notes\naliases:\n  - standup\n  - daily\ntags: [work, meeting]\ncreated: 2026-08-21\ncssclasses:\n  - wide\npublish: false\n# reviewed by RW\nstatus: draft\n---\n\n# Meeting notes\n\nBody text with [[a link]].\n",
 }
 
 func str(n int, c rune) string {

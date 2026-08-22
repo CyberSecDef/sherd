@@ -1,10 +1,10 @@
-# Granite — Working Agreement
+# Sherd — Working Agreement
 
 This file governs all work in this repository.
 
 ## What this repo is
 
-Granite is a clean-room, open-source, local-first PKM application in **Go 1.23+**, licensed **GPL-3.0-or-later**. Two documents define the work:
+Sherd is a clean-room, open-source, local-first PKM application in **Go 1.23+**, licensed **GPL-3.0-or-later**. Two documents define the work:
 
 | File | Role |
 |---|---|
@@ -19,9 +19,9 @@ Granite is a clean-room, open-source, local-first PKM application in **Go 1.23+*
 
 # Baseline Engineering Rules
 
-Twelve working rules aimed at the failure modes language models fall into when writing code. The topics are adapted from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876); the wording here is original to this repository and tuned to Granite.
+Twelve working rules aimed at the failure modes language models fall into when writing code. The topics are adapted from [Andrej Karpathy's observations on LLM coding pitfalls](https://x.com/karpathy/status/2015883857489522876); the wording here is original to this repository and tuned to Sherd.
 
-They apply to every task unless a Granite-specific override below supersedes them. **Tradeoff:** these rules trade speed for caution. On genuinely trivial work, use judgment.
+They apply to every task unless a Sherd-specific override below supersedes them. **Tradeoff:** these rules trade speed for caution. On genuinely trivial work, use judgment.
 
 ## 1. Think first
 
@@ -72,7 +72,7 @@ Do not use one for work that is deterministic: routing, retry logic, status-code
 
 Work in bounded units. When a task is running past its budget, stop at a clean boundary, summarize, and start fresh rather than pushing through.
 
-Announcing that you are out of room beats silently running over. (Granite replaces the token-count form of this rule — see override **O2**.)
+Announcing that you are out of room beats silently running over. (Sherd replaces the token-count form of this rule — see override **O2**.)
 
 ## 7. Name conflicts instead of splitting the difference
 
@@ -107,7 +107,7 @@ If you cannot confirm something worked, say so plainly.
 "Migration complete" is false if thirty records were skipped. "Tests pass" is false if you skipped some. "The feature works" is false if you never checked the edge case that was asked about. Surface the uncertainty; never let it pass as success.
 ---
 
-# Granite-Specific Overrides
+# Sherd-Specific Overrides
 
 The twelve rules above are the default. Where this project needs something different, this section wins. Each override says which rule it modifies and why.
 

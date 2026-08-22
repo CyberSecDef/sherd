@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Package index implements the SQLite metadata cache: schema, forward-only migrations, and the incremental indexer.
 //

@@ -1,4 +1,4 @@
-# Granite — Implementation Plan
+# Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.1)
 **Plan version:** 1.1
@@ -56,7 +56,7 @@ P-1  Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Struct
 | Phase | Title | Est. | Gate to next phase |
 |---|---|---|---|
 | **P-1** | Bootstrap & decisions | 3–4 w | All `OD-*` spikes resolved and recorded as ADRs |
-| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | `granite search` on a 20k-note vault; conformance corpus green |
+| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | `sherd search` on a 20k-note vault; conformance corpus green |
 | **P1** | Core app (daemon, IPC, webview, editor) | 16–20 w | Daily-driver for one user, one device |
 | **P2** | Structure (graph, canvas, modules, replace) | 12–16 w | Parity with the reference product's core module set |
 | **P3** | Extensibility (plugins, themes, settings UI) | 10–14 w | Third party ships a plugin from published docs alone |
@@ -182,7 +182,7 @@ Run these in parallel; none may slip past its box.
 - YAML 1.2 parsing with the YAML 1.1 boolean footgun disabled (`no`/`off`/`yes`/`on` stay strings unless typed).
 - Comment-, order-, quoting-, and indentation-preserving write path per the `OD-004` ADR.
 - Property type model: `text`, `number`, `checkbox`, `date`, `datetime`, `list`, `tags`, `aliases`, `cssclasses`, `link`, `list-of-link`.
-- Vault-level type registry `.granite/types.json`; inference when undeclared; mismatch = warning, never data loss.
+- Vault-level type registry `.sherd/types.json`; inference when undeclared; mismatch = warning, never data loss.
 - Invalid YAML is non-blocking: error with line/column, body still parses and indexes.
 - Reserved/behavioral properties recognized: `aliases`, `tags`, `cssclasses`, `publish`, `permalink`, `direction`.
 - **Delivers:** `pkg/format/frontmatter`, 200-file fixture set, round-trip property test.
@@ -204,8 +204,8 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Done when:** corpus ≥ 500 cases green; a dedicated code-precedence suite covers every extension × every code context.
 
 ### P0.4 `internal/vault` — filesystem layer
-- Vault lifecycle: open any directory, create config dir (default `.granite/`, name configurable at creation), app-level vault registry, nesting refusal, `$HOME`/`/`/`C:\`/>250k-file guards with scan preview, read-only mode enforced at this layer, multi-vault.
-- File type handling: Markdown extension set, natively-viewable media list, SVG sanitization, unknown-type handling, dotfile hiding, `.graniteignore` (gitignore syntax) + settings exclusions, binary detection (NUL in first 8 KB / UTF-8 failure), encoding detection and line-ending preservation.
+- Vault lifecycle: open any directory, create config dir (default `.sherd/`, name configurable at creation), app-level vault registry, nesting refusal, `$HOME`/`/`/`C:\`/>250k-file guards with scan preview, read-only mode enforced at this layer, multi-vault.
+- File type handling: Markdown extension set, natively-viewable media list, SVG sanitization, unknown-type handling, dotfile hiding, `.sherdignore` (gitignore syntax) + settings exclusions, binary detection (NUL in first 8 KB / UTF-8 failure), encoding detection and line-ending preservation.
 - Atomic write: temp file in the same directory → `fsync` → `rename`. Never truncate in place.
 - External-modification detection (mtime + size + content hash); never silently overwrite.
 - Trash: OS trash per platform, vault-local `.trash/`, or permanent.
@@ -276,12 +276,12 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Covers:** `FR-SRCH-001`…`FR-SRCH-010`, `FR-SRCH-014`, `FR-SRCH-015`, `QA-004`.
 - **Done when:** full-text query on the 20k reference vault returns the first page ≤ 200 ms p95; a phrase whose terms are individually common but rarely adjacent returns only verified matches, streamed; the parser survives 24 h fuzz; every EBNF production has a test.
 
-### P0.10 `cmd/granite` — CLI skeleton (standalone mode)
+### P0.10 `cmd/sherd` — CLI skeleton (standalone mode)
 - Cobra-style command tree, `--standalone` operating directly on a vault (daemon comes in P1).
 - P0 subset: `vault list|open|info|reindex|verify`, `ls`, `read`, `write`, `create`, `rename`, `rm`, `search`, `links`, `tags`, `props`, `tasks`, `doctor` (index/permissions/config subset).
 - `--format json` with a documented stable schema; meaningful exit codes (0/1/2/3/4); stdin/stdout/stderr discipline; `NO_COLOR`; shell completions for bash/zsh/fish/PowerShell.
 - **Covers:** `FR-CLI-001`, `FR-CLI-002`, `FR-CLI-003`, `FR-CLI-004`, partial `FR-OBS-002`.
-- **Done when:** `granite search '<complex query>' --format json` on a 20k-note vault returns correct, schema-valid results from a cold start.
+- **Done when:** `sherd search '<complex query>' --format json` on a 20k-note vault returns correct, schema-valid results from a cold start.
 
 ### P0.11 Performance harness and reference vault generator
 - Deterministic generator producing the spec §3.1 reference vault (20,000 notes, 250 MB, mean 4 KB, p99 400 KB) plus pathological variants (5 MB note, 100k files, 300-char names, CJK corpus).
@@ -289,7 +289,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Covers:** `QA-008`, `NFR-PERF-002`, `NFR-PERF-003`, `NFR-PERF-005`, `NFR-PERF-010`, `QA-007`.
 - **Done when:** CI fails on a synthetic 15% regression.
 
-**Phase gate P0:** `granite search` works on a 20k-note vault from the terminal; conformance corpus ≥ 500 cases green; frontmatter round-trip byte-exact; index rebuildable from scratch with zero data loss; `pkg/format` importable as a standalone library with no `internal/` dependency.
+**Phase gate P0:** `sherd search` works on a 20k-note vault from the terminal; conformance corpus ≥ 500 cases green; frontmatter round-trip byte-exact; index rebuildable from scratch with zero data loss; `pkg/format` importable as a standalone library with no `internal/` dependency.
 
 ---
 
@@ -306,8 +306,8 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Multiple concurrent clients on one vault over one authoritative in-memory model.
 - Multiple open vaults, isolated: separate index DBs, plugin hosts, config.
 - Single-process mode: the same interfaces wired through an in-process transport.
-- Headless guarantee: no GUI toolkit or display server linked into `granited`.
-- **Delivers:** `cmd/granited`, `internal/rpc`, generated schema docs and clients.
+- Headless guarantee: no GUI toolkit or display server linked into `sherdd`.
+- **Delivers:** `cmd/sherdd`, `internal/rpc`, generated schema docs and clients.
 - **Covers:** `ARC-001`…`ARC-006`, `FR-IDX-013` (transport half), `FR-CLI-001` (daemon mode).
 - **Done when:** two CLI clients and one GUI client mutate the same vault concurrently with consistent state; the deadlock stress job is clean (`QA-005`).
 
@@ -318,7 +318,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Versioned idempotent migrations with automatic pre-migration backup.
 - App-level config in XDG / `~/Library/Application Support` / `%APPDATA%`; vault config inside the vault.
 - Export/import of the full settings set as one archive.
-- CLI and IPC reach every setting (`granite config get|set|list|export|import`).
+- CLI and IPC reach every setting (`sherd config get|set|list|export|import`).
 - **Covers:** `FR-CFG-001`…`FR-CFG-006`, `NFR-PLAT-004`.
 - **Done when:** hand-editing any config file and restarting produces the expected behavior; a corrupted value logs and resets without blocking startup.
 
@@ -334,7 +334,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - All frontend source ships unminified in `web/`, GPL-licensed.
 - Rendered note content treated as untrusted: HTML sanitization, no inline script, no remote resource loads by default with a configurable allowlist.
 - External link policy: confirmation for non-`http(s)`; `file://`, `javascript:`, `data:`, and OS-handler schemes blocked or confirmed.
-- `granite serve --addr 127.0.0.1:7777` exposes the same frontend over loopback HTTP with token auth.
+- `sherd serve --addr 127.0.0.1:7777` exposes the same frontend over loopback HTTP with token auth.
 - **Covers:** `ARC-UI-001`…`ARC-UI-004`, `NFR-SEC-003`, `NFR-SEC-004`, `FR-LNK-010`.
 - **Done when:** a note containing `<script>`, a remote `<img>`, and a `javascript:` link renders inert; axe-core reports zero critical violations.
 
@@ -409,16 +409,16 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Local snapshot history: on every save and a 5-minute dirty-buffer timer, compressed deltas; retention window (default 7 days), 100 versions/file cap, global cap (default 1 GB).
 - Three-way diff UI when an open file changed externally; user chooses.
 - File recovery module: browse snapshots, diff against current, restore whole or by hunk.
-- **Covers:** `NFR-REL-002` (UI half), `NFR-REL-003`, `FR-MOD-018`, `FR-CLI-002` (`granite history`).
+- **Covers:** `NFR-REL-002` (UI half), `NFR-REL-003`, `FR-MOD-018`, `FR-CLI-002` (`sherd history`).
 - **Done when:** an external `sed -i` on an open dirty file surfaces a three-way diff and no edit is lost on any branch of the choice.
 
 ### P1.12 Observability
-- `granite doctor` completed: index integrity, watcher health, inotify limits, permissions, config validity, disk space, clock skew, with actionable remedies.
+- `sherd doctor` completed: index integrity, watcher health, inotify limits, permissions, config validity, disk space, clock skew, with actionable remedies.
 - In-app diagnostics panel: index stats (including per-component index size, `NFR-PERF-011`), memory, open handles, slow-query log.
 - `pprof` behind an explicit flag, loopback only.
 - Crash reports written locally; any upload opt-in per report with a full preview.
 - **Covers:** `FR-OBS-002`, `FR-OBS-003`, `FR-OBS-004`, `FR-OBS-005`.
-- **Done when:** `granite doctor` on a vault with exhausted inotify watches prints the exact `sysctl` remedy.
+- **Done when:** `sherd doctor` on a vault with exhausted inotify watches prints the exact `sysctl` remedy.
 
 ### P1.13 Base theming
 - Light/dark/follow-system with no restart and no flash.
@@ -434,7 +434,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Covers:** `NFR-PERF-001`, `NFR-PERF-002`, `NFR-PERF-007`.
 - **Done when:** the CI perf gate measures all three on the reference vault.
 
-**Phase gate P1:** one engineer uses Granite as their only PKM tool for two weeks with no data loss and no fallback to another editor.
+**Phase gate P1:** one engineer uses Sherd as their only PKM tool for two weeks with no data loss and no fallback to another editor.
 
 ---
 
@@ -454,7 +454,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - GPU-accelerated rendering with LOD, off-screen culling, node capping with a clear indicator.
 - Named presets, restorable per workspace.
 - Export: PNG/SVG at chosen resolution; GraphML/DOT/JSON.
-- **Covers:** `FR-GRPH-001`…`FR-GRPH-011`, `NFR-PERF-008`, `FR-CLI-002` (`granite graph`).
+- **Covers:** `FR-GRPH-001`…`FR-GRPH-011`, `NFR-PERF-008`, `FR-CLI-002` (`sherd graph`).
 - **Done when:** ≥ 30 fps pan/zoom at 5,000 visible nodes; the same seed reproduces the same layout byte-for-byte.
 
 ### P2.2 `‖` `internal/canvas` — spatial canvas
@@ -468,7 +468,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Navigation: zoom-to-fit, zoom-to-selection, minimap, node search-and-jump, nested-group breadcrumb.
 - Virtualized rendering; no editors mounted for off-screen file nodes.
 - Export: PNG/SVG of canvas or selection; Markdown outline representation.
-- **Covers:** `FR-CNV-001`…`FR-CNV-011`, `FR-CLI-002` (`granite canvas`), `QA-004` (canvas fuzz target).
+- **Covers:** `FR-CNV-001`…`FR-CNV-011`, `FR-CLI-002` (`sherd canvas`), `QA-004` (canvas fuzz target).
 - **Done when:** ≥ 60 fps with 500 nodes; a canvas written by a future version with unknown keys round-trips byte-identically.
 
 ### P2.3 `‖` Properties view and vault-wide refactors
@@ -481,7 +481,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Preview-first, per-match toggles, atomic transactional apply, single undo, regex capture-group substitution.
 - Saved searches: persistable, nameable, bookmarkable, embeddable in notes as a query code fence.
 - Full DSL parity across UI, CLI, and IPC with a JSON result form.
-- **Covers:** `FR-SRCH-011`, `FR-SRCH-012`, `FR-SRCH-013`, `FR-CLI-002` (`granite replace`).
+- **Covers:** `FR-SRCH-011`, `FR-SRCH-012`, `FR-SRCH-013`, `FR-CLI-002` (`sherd replace`).
 - **Done when:** a regex replace touching 2,000 files applies atomically and reverts completely with one undo.
 
 ### P2.5 `‖` Note-lifecycle modules
@@ -491,14 +491,14 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Unique note creator: timestamp/UID filename, configurable format and folder, optional title.
 - Note composer: merge two notes (append/prepend with link fixup), extract selection to a new note (leaving a link or embed), split at a heading — all link-integrity preserving.
 - Random note, scoped by folder/tag/query.
-- **Covers:** `FR-MOD-001`…`FR-MOD-005`, `FR-MOD-017`, `FR-CLI-002` (`granite daily`, `granite template apply`).
+- **Covers:** `FR-MOD-001`…`FR-MOD-005`, `FR-MOD-017`, `FR-CLI-002` (`sherd daily`, `sherd template apply`).
 - **Done when:** a DST-boundary test and a `TZ=Pacific/Kiritimati` test both resolve "today" correctly.
 
 ### P2.6 `‖` Media and capture modules
 - Audio recorder: device selection, OGG/Opus or WAV into the attachment folder, embed insertion, explicit permission prompt, visible recording indicator.
 - Web viewer: sandboxed in-app browser tab, visible URL bar and security indicator, no cookie/storage sharing with the app origin, **disabled by default**.
 - Print/PDF export of note or selection preserving rendered styles, with page size and margins.
-- **Covers:** `FR-MOD-013`, `FR-MOD-019`, `FR-MOD-021`, `FR-CLI-002` (`granite export`).
+- **Covers:** `FR-MOD-013`, `FR-MOD-019`, `FR-MOD-021`, `FR-CLI-002` (`sherd export`).
 - **Done when:** the web viewer cannot read app-origin storage, asserted by a test.
 
 ### P2.7 `‖` Slides
@@ -550,13 +550,13 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Registry (if any) is a plain Git repo of signed manifests with a user-configurable URL. **No proprietary registry service.**
 - Per-vault enable/disable; global safe mode; **safe mode is the default for a newly opened vault containing unapproved plugins**.
 - Settings persisted at `<config>/plugins/<id>/data.json` with a declared JSON Schema so the host renders settings UI without plugin UI code.
-- Hot reload without restart, plus `granite plugin reload`.
-- **Covers:** `FR-PLG-020`…`FR-PLG-025`, `FR-CLI-002` (`granite plugin …`).
+- Hot reload without restart, plus `sherd plugin reload`.
+- **Covers:** `FR-PLG-020`…`FR-PLG-025`, `FR-CLI-002` (`sherd plugin …`).
 - **Done when:** installing, enabling, reloading, revoking a capability, and uninstalling a plugin all work with the network interface down.
 
 ### P3.6 `pkg/pluginsdk`
 - Idiomatic Go bindings, `go generate` scaffold, and a local test harness that runs a plugin against a fixture vault **without launching the GUI**.
-- Tutorial: from `granite plugin new` to a working plugin in under 30 minutes.
+- Tutorial: from `sherd plugin new` to a working plugin in under 30 minutes.
 - **Covers:** `FR-PLG-031`, `ARC-MOD-001` (public package rules).
 - **Done when:** an external contributor, given only `docs/`, ships a working plugin — this is the phase gate.
 
@@ -614,8 +614,8 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 
 ### P4.6 Embedding and export
 - `.base` views embeddable via a code fence and via `![[view.base]]`, with an optional named-view selector.
-- Export a result set to CSV, JSON, and Markdown table; `granite base run <file.base> --view NAME --format json|csv|md`.
-- **Covers:** `FR-BASE-009`, `FR-BASE-012`, `FR-CLI-002` (`granite base run`).
+- Export a result set to CSV, JSON, and Markdown table; `sherd base run <file.base> --view NAME --format json|csv|md`.
+- **Covers:** `FR-BASE-009`, `FR-BASE-012`, `FR-CLI-002` (`sherd base run`).
 - **Done when:** an embedded view inside a note renders live and the CLI produces identical rows.
 
 ### P4.7 Layouts — v1.1 set
@@ -661,7 +661,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Done when:** killing the process mid-transfer 100 times leaves a consistent local state every time.
 
 ### P5.4 Backends
-- Granite server backend (default).
+- Sherd server backend (default).
 - **Git backend** and **plain-folder backend** (Syncthing/Dropbox/iCloud) sharing the same conflict-resolution UI — no second conflict codepath.
 - Selective sync by glob include/exclude; a device may hold a subset of the vault.
 - **Covers:** `FR-SYN-003`, `FR-SYN-024`.
@@ -682,7 +682,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Browse, diff, restore any version; **restore creates a new version rather than rewriting history**.
 - Vault-wide point-in-time restore, previewed before applying.
 - Deleted-file retention window enabling undelete from any device.
-- **Covers:** `FR-SYN-023`, `FR-SYN-040`, `FR-SYN-041`, `FR-SYN-042`, `FR-CLI-002` (`granite history`).
+- **Covers:** `FR-SYN-023`, `FR-SYN-040`, `FR-SYN-041`, `FR-SYN-042`, `FR-CLI-002` (`sherd history`).
 - **Done when:** a point-in-time restore preview exactly predicts the applied result on a 5,000-file divergence.
 
 ### P5.7 Sync test harness `(gate)`
@@ -707,9 +707,9 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Done when:** a removed member's device provably cannot decrypt post-rotation content, asserted by test.
 
 ### P5.10 Headless sync
-- `granite sync headless --vault PATH --daemon` runs with no display server and no GUI dependency — a server-side replica for backup, CI, and agent workflows.
-- `granite sync status|now|pause|resume|conflicts|resolve`.
-- **Covers:** `FR-CLI-010`, `FR-CLI-002` (`granite sync`).
+- `sherd sync headless --vault PATH --daemon` runs with no display server and no GUI dependency — a server-side replica for backup, CI, and agent workflows.
+- `sherd sync status|now|pause|resume|conflicts|resolve`.
+- **Covers:** `FR-CLI-010`, `FR-CLI-002` (`sherd sync`).
 - **Done when:** the headless replica runs for 7 days in CI against a live server with zero divergence.
 
 **Phase gate P5:** `QA-006` passes across 10,000 randomized runs with zero lost operations; `docs/CRYPTO.md` externally reviewed and signed off.
@@ -726,7 +726,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Preserve wikilinks (rewritten to site URLs), embeds, callouts, math (server-side MathML), Mermaid, code highlighting, footnotes, images with responsive `srcset`.
 - User-overridable Go `html/template` layouts and partials plus theme CSS.
 - Incremental builds: regenerate only pages whose content or dependencies changed.
-- **Covers:** `FR-PUB-001`, `FR-PUB-002` (output half), `FR-PUB-003`, `FR-PUB-007`, `FR-PUB-008`, `FR-CLI-002` (`granite publish build`).
+- **Covers:** `FR-PUB-001`, `FR-PUB-002` (output half), `FR-PUB-003`, `FR-PUB-007`, `FR-PUB-008`, `FR-CLI-002` (`sherd publish build`).
 - **Done when:** a 20k-note vault builds incrementally, and touching one note regenerates only that page and its dependents.
 
 ### P6.2 `‖` Publish — search, graph, hygiene, privacy
@@ -749,7 +749,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 ### P6.4 `‖` Importers and format converter
 Each importer is independent — good parallel and community work. Each **must produce a report of what was converted, skipped, and lossy**.
 - Notion (ZIP/HTML/CSV), Evernote `.enex`, Roam JSON, Bear, Apple Notes (via export), Joplin, OneNote, Google Keep (Takeout), Zettelkasten/Zettlr, plain HTML, generic Markdown re-linking.
-- Format converter: normalize foreign dialects into Granite syntax (`((block-ref))` → `[[note#^id]]`, date-link normalization) with per-rule toggles and a dry-run diff.
+- Format converter: normalize foreign dialects into Sherd syntax (`((block-ref))` → `[[note#^id]]`, date-link normalization) with per-rule toggles and a dry-run diff.
 - **Covers:** `FR-MOD-014`, `FR-MOD-015`.
 - **Done when:** each importer has a fixture export in `testdata/` and a golden output tree, and the lossiness report is accurate.
 
@@ -760,7 +760,7 @@ Each importer is independent — good parallel and community work. Each **must p
 - **Done when:** an agent session's every read and write appears in the audit log, and write attempts without a grant are refused.
 
 ### P6.6 `‖` TUI client
-- `cmd/granite-tui` (Bubble Tea) as a **secondary** client over the same IPC: browse, open, edit plain text, search, backlinks, quick switcher, command palette.
+- `cmd/sherd-tui` (Bubble Tea) as a **secondary** client over the same IPC: browse, open, edit plain text, search, backlinks, quick switcher, command palette.
 - Serves as the standing proof of `ARC-UI-003` — if the TUI cannot do it, the webview had business logic in it.
 - **Covers:** spec §4.2 (TUI row), `ARC-UI-003` (enforcement).
 - **Done when:** the TUI performs every P0/P1 core operation with no logic duplicated from `web/`.
@@ -814,7 +814,7 @@ Each importer is independent — good parallel and community work. Each **must p
 | R10 | Performance budgets regress gradually | Death by a thousand cuts; unrecoverable late | CI perf gate from P0.11 with a 10% failure threshold | P0.11, X.1.6 |
 | R11 | A GPL-incompatible or analytics dependency slips in | Legal exposure; violates a stated principle | CI denylist and license allowlist from P-1.2, tested with deliberate violations | P-1.2 |
 | R12 | Scope creep into mobile or co-editing during v1 | Delays everything else | Both explicitly deferred; X.4 is a *compile* guard, not a feature track | X.4, §15 |
-| R13 | Index and vault disagree after an external bulk change | Wrong search results, silently | Reconciliation scan, generation counter, `granite doctor`, torture suite | P0.5, P0.7, P1.12 |
+| R13 | Index and vault disagree after an external bulk change | Wrong search results, silently | Reconciliation scan, generation counter, `sherd doctor`, torture suite | P0.5, P0.7, P1.12 |
 | R14 | Trademark collision on the shipped name | Blocks release after all the work | `OD-007` clearance runs in parallel from P-1 and blocks first public release only | P-1.3 |
 
 ---

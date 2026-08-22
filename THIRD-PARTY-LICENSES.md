@@ -1,6 +1,6 @@
 # Third-Party Licenses
 
-Every third-party component linked into Granite, with its license. Granite is
+Every third-party component linked into Sherd, with its license. Sherd is
 distributed under GPL-3.0-or-later; every license listed here is compatible with
 those terms (`LEG-005`). This file ships in every release artifact (`LEG-006`).
 
@@ -11,7 +11,7 @@ adding or removing a dependency.
 
 _None._
 
-Granite currently has no third-party dependencies. This is the desired steady
+Sherd currently has no third-party dependencies. This is the desired steady
 state for the core: prefer the standard library, and add a dependency only when
 it earns its place (see CONTRIBUTING.md §5).
 

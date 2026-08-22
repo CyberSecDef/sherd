@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Fail if any analytics or telemetry package appears in the dependency graph
 # of a shipped binary (NFR-SEC-001).
 #
-# Granite has no telemetry. Not opt-in, not opt-out, not anonymous, not
+# Sherd has no telemetry. Not opt-in, not opt-out, not anonymous, not
 # "just crash counts". The absence is a promise to users, and a promise that
 # nobody checks is a promise that erodes. This is the check.
 #
@@ -106,7 +106,7 @@ else
 	printf '    %s\n' "$hits" >&2
 	cat >&2 <<'MSG'
 
-  Granite ships no telemetry. If you believe this is a false positive, say so
+  Sherd ships no telemetry. If you believe this is a false positive, say so
   in the pull request and adjust the denylist in this script with a reason.
   If it is not a false positive, the dependency cannot be used.
 MSG

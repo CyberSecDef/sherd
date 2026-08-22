@@ -9,7 +9,7 @@ github.com/fsnotify/fsnotify
 github.com/tetratelabs/wazero
 golang.org/x/crypto/argon2
 golang.org/x/text/unicode/norm
-github.com/CyberSecDef/granite/internal/vault
-github.com/CyberSecDef/granite/pkg/format
+github.com/CyberSecDef/sherd/internal/vault
+github.com/CyberSecDef/sherd/pkg/format
 log/slog
 net/http

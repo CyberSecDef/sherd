@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
-# Architecture rules for Granite (ARC-MOD-001, ARC-MOD-002, ARC-MOD-003).
+# Architecture rules for Sherd (ARC-MOD-001, ARC-MOD-002, ARC-MOD-003).
 # Checked in CI by go-arch-lint. See REQUIREMENT_SPEC.md section 4.3.
 #
-# The rule that matters most here: pkg/ is Granite's public API surface and
+# The rule that matters most here: pkg/ is Sherd's public API surface and
 # must never import internal/. pkg/format in particular is meant to be usable
 # as a standalone library by anyone (ARC-MOD-001).
 

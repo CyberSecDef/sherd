@@ -1,7 +1,7 @@
 // Spike module. Deliberately separate from the main module so that
-// throwaway benchmark dependencies never enter Granite's dependency graph
+// throwaway benchmark dependencies never enter Sherd's dependency graph
 // (see docs/adr/README.md).
-module github.com/CyberSecDef/granite/spikes
+module github.com/CyberSecDef/sherd/spikes
 
 go 1.25.0
 

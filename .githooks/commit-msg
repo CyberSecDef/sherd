@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2026 The Granite Authors
+# Copyright (C) 2026 The Sherd Authors
 #
 # Reject any commit without a Developer Certificate of Origin sign-off (LEG-007).
 # Install with: make hooks
@@ -15,7 +15,7 @@ fi
 cat >&2 <<'MSG'
 ✗ Commit rejected: missing Signed-off-by trailer.
 
-Granite requires a Developer Certificate of Origin sign-off on every commit
+Sherd requires a Developer Certificate of Origin sign-off on every commit
 (LEG-007, see CONTRIBUTING.md §2). Commit with -s:
 
     git commit -s

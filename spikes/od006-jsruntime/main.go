@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Command od006-jsruntime compares the two candidate JavaScript runtimes for
 // UI-heavy plugins (OD-006): goja, a pure-Go interpreter, and QuickJS compiled

@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing to Granite. Please fill in the sections below.
+Thanks for contributing to Sherd. Please fill in the sections below.
 The clean-room checklist is not boilerplate — it is what keeps this project's
 provenance defensible (LEG-001..008). Please read it rather than tick it.
 -->

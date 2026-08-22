@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Command od002-sqlite benchmarks the two candidate SQLite drivers against a
 // reference-scale vault (OD-002).

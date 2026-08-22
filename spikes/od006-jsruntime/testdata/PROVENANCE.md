@@ -7,6 +7,6 @@ QuickJS-ng v0.16.2, official WASI build.
 - SHA-256: recorded in `qjs-wasi.wasm.sha256`
 
 Downloaded for the OD-006 benchmark only. **This binary is not a dependency of
-Granite** and nothing in the main module references it. If OD-006 were ever
-revisited in favour of QuickJS, Granite would build this artifact from source
+Sherd** and nothing in the main module references it. If OD-006 were ever
+revisited in favour of QuickJS, Sherd would build this artifact from source
 rather than vendor someone else's binary — see ADR 0006.

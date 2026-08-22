@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement by opening a private report through GitHub's [security advisory form](https://github.com/CyberSecDef/granite/security/advisories/new) (which is private to the maintainers) or by contacting a maintainer directly through GitHub. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement by opening a private report through GitHub's [security advisory form](https://github.com/CyberSecDef/sherd/security/advisories/new) (which is private to the maintainers) or by contacting a maintainer directly through GitHub. All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

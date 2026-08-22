@@ -5,7 +5,7 @@
 **Report privately. Do not open a public issue for a security problem.**
 
 Use GitHub's private vulnerability reporting:
-**https://github.com/CyberSecDef/granite/security/advisories/new**
+**https://github.com/CyberSecDef/sherd/security/advisories/new**
 
 Reports there are visible only to the maintainers. If you cannot use that form,
 contact a maintainer directly through GitHub and ask for a private channel —
@@ -15,10 +15,10 @@ Please include, as far as you can:
 
 - What an attacker gains, and what access they need to start.
 - Reproduction steps, ideally against a scratch vault with no real data.
-- Affected version or commit, operating system, and how you installed Granite.
+- Affected version or commit, operating system, and how you installed Sherd.
 - Any proof-of-concept file, note, plugin, or request that triggers it.
 
-**Never include real personal notes in a report.** Granite is a personal
+**Never include real personal notes in a report.** Sherd is a personal
 knowledge management tool; a reproduction case should be synthetic.
 
 ## What to expect
@@ -53,20 +53,20 @@ In scope, and taken seriously:
   key handling, or anything letting a malicious server read or forge data
   (`FR-SYN-010` … `FR-SYN-016`).
 - Sandbox escapes from the plugin capability model (`FR-PLG-004`, `FR-PLG-010`).
-- Any outbound network request Granite makes that the user did not ask for.
-  Granite has no telemetry and never will; a phone-home is a security bug.
+- Any outbound network request Sherd makes that the user did not ask for.
+  Sherd has no telemetry and never will; a phone-home is a security bug.
 
 Out of scope:
 
 - Vulnerabilities in a third-party plugin. Report those to that plugin's author,
   though we do want to hear about a *host* weakness the plugin exposed.
-- Attacks requiring an already-compromised local user account, unless Granite
+- Attacks requiring an already-compromised local user account, unless Sherd
   makes the compromise meaningfully worse.
 - Missing hardening with no demonstrated impact.
 
 ## Supported versions
 
-Granite is pre-release; no version is supported yet. This table becomes
+Sherd is pre-release; no version is supported yet. This table becomes
 meaningful at v1.0. Until then, fixes land on `main`.
 
 ## Threat model

@@ -1,8 +1,8 @@
 # Build artifacts
 /dist/
-/cmd/granite/granite
-/cmd/granited/granited
-/cmd/granite-tui/granite-tui
+/cmd/sherd/sherd
+/cmd/sherdd/sherdd
+/cmd/sherd-tui/sherd-tui
 *.exe
 
 # Test and profiling output

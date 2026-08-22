@@ -1,4 +1,4 @@
-# Granite
+# Sherd
 
 A local-first, plain-text personal knowledge management application.
 
@@ -39,7 +39,7 @@ These resolve every ambiguity in the specification, in this order:
 | [`REQUIREMENT_SPEC.md`](REQUIREMENT_SPEC.md) | The contract. 350 numbered requirements, RFC 2119 normative. |
 | [`PLAN.md`](PLAN.md) | The route. Phases P-1 → P7, 60 steps, with a traceability matrix covering every requirement. |
 | [`CLAUDE.md`](CLAUDE.md) | Working agreement for anyone — human or agent — writing code here. |
-| `cmd/` | Binaries: `granite` (CLI + launcher), `granited` (daemon), `granite-tui`. |
+| `cmd/` | Binaries: `sherd` (CLI + launcher), `sherdd` (daemon), `sherd-tui`. |
 | `internal/` | Implementation packages. |
 | `pkg/` | Public libraries: `format` (file formats), `pluginsdk`. |
 | `web/` | Frontend sources, shipped unminified. |
@@ -61,7 +61,7 @@ make help      # list targets
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) first — particularly §1. Granite is a
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first — particularly §1. Sherd is a
 **clean-room** project: it is written from a functional specification, and
 contributors must not have copied or reconstructed any proprietary application's
 source. Every commit requires a DCO sign-off (`git commit -s`).
@@ -73,5 +73,5 @@ Security issues go through [SECURITY.md](SECURITY.md), never a public issue.
 GPL-3.0-or-later. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
 [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
 
-*"Granite" is a working codename and must clear a trademark search before any
+*"Sherd" is a working codename and must clear a trademark search before any
 public release.*

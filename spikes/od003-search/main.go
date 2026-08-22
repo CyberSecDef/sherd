@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Command od003-search decides whether SQLite FTS5 can serve CJK search, or
 // whether Bleve is required (OD-003).

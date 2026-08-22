@@ -1,5 +1,11 @@
 # Name screening log
 
+> **Outcome: the project is named `sherd`.** Decided 2026-08-21, recorded in
+> [ADR 0008](adr/0008-project-name-sherd.md). This log is retained as the
+> evidence behind that decision, and as a record of the twelve names that did
+> not survive. References to `granite` below are historical and deliberately
+> left unedited.
+
 Working notes supporting [ADR 0007](adr/0007-project-name.md), which requires a
 rename before public release. This file is a **living log**, not a decision
 record — it accumulates screening results so each round is systematic rather

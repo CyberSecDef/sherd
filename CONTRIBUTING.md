@@ -1,6 +1,6 @@
-# Contributing to Granite
+# Contributing to Sherd
 
-Thank you for considering it. Granite is a clean-room project with unusually
+Thank you for considering it. Sherd is a clean-room project with unusually
 strict provenance rules, so please read §1 before you write any code — it is the
 one part of this document that can invalidate work after the fact.
 
@@ -10,7 +10,7 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## 1. Clean-room rules — read this first
 
-Granite is written from a functional specification, not from anyone else's
+Sherd is written from a functional specification, not from anyone else's
 source. These rules come from `LEG-001` … `LEG-008` in `REQUIREMENT_SPEC.md` and
 they bind every contribution.
 
@@ -77,8 +77,8 @@ CI rejects any pull request containing a commit without a valid sign-off.
 Requirements: **Go 1.23 or newer**. Nothing else is needed to build the core.
 
 ```sh
-git clone https://github.com/CyberSecDef/granite.git
-cd granite
+git clone https://github.com/CyberSecDef/sherd.git
+cd sherd
 make hooks          # installs the commit-msg hook that checks sign-off
 make tools          # installs the linters into $(go env GOPATH)/bin
 make check          # build, vet, format, lint, licenses, vulnerabilities
@@ -126,7 +126,7 @@ Dependencies are a legal decision here, not only a technical one.
 3. **Keep it pure Go.** The core daemon must build without CGO. If CGO is
    unavoidable, gate it behind a build tag and keep a pure-Go fallback
    (`NFR-PLAT-002`).
-4. **Never add an analytics or telemetry library.** Granite has none and will
+4. **Never add an analytics or telemetry library.** Sherd has none and will
    have none. CI fails on known analytics import paths (`NFR-SEC-001`).
 5. After adding it, run `make licenses` to regenerate
    `THIRD-PARTY-LICENSES.md` and commit the result (`LEG-006`).
@@ -170,7 +170,7 @@ These are structural and expensive to unwind later:
 
   ```go
   // SPDX-License-Identifier: GPL-3.0-or-later
-  // Copyright (C) 2026 The Granite Authors
+  // Copyright (C) 2026 The Sherd Authors
   ```
 
 ---
@@ -179,7 +179,7 @@ These are structural and expensive to unwind later:
 
 - **Security vulnerability:** do not open an issue. Follow
   [SECURITY.md](SECURITY.md).
-- **Bug:** include your OS, Granite version, vault size, and a synthetic
+- **Bug:** include your OS, Sherd version, vault size, and a synthetic
   reproduction. Never paste real personal notes into an issue.
 - **Feature idea:** check `REQUIREMENT_SPEC.md` first — it may already be
   specified and scheduled in `PLAN.md`.
@@ -188,6 +188,6 @@ These are structural and expensive to unwind later:
 
 ## 9. Licensing of your contribution
 
-Granite is **GPL-3.0-or-later**. By contributing under the DCO you agree your
+Sherd is **GPL-3.0-or-later**. By contributing under the DCO you agree your
 contribution is licensed on those terms. There is no copyright assignment and no
 CLA; you keep your copyright.

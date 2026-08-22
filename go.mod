@@ -1,3 +1,3 @@
-module github.com/CyberSecDef/granite
+module github.com/CyberSecDef/sherd
 
 go 1.23

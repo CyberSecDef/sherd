@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2026 The Granite Authors
+// Copyright (C) 2026 The Sherd Authors
 
 // Package od005 demonstrates the editor buffer abstraction that specification
 // section 19.7 requires (OD-005).
