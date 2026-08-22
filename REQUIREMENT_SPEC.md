@@ -3,7 +3,7 @@
 **Name:** `sherd` (chosen 2026-08-21; see ADR 0008. Preliminary screening only — `LEG-003` still requires a legal clearance before public release)
 **Target language:** Go 1.23+
 **Target license:** GPL-3.0-or-later
-**Document version:** 1.4 (see Appendix B for the change log)
+**Document version:** 1.5 (see Appendix B for the change log)
 **Status:** Draft for implementation handoff
 **Audience:** Implementing engineer / agentic coding session
 
@@ -213,7 +213,6 @@ sherd/
 │   └── sherd-tui/      # terminal client
 ├── internal/
 │   ├── vault/            # fs abstraction, watcher, atomic io, trash
-│   ├── mdast/            # goldmark extensions, AST, positions
 │   ├── index/            # SQLite schema, migrations, incremental indexer
 │   ├── graph/            # link graph, traversal, layout
 │   ├── query/            # search DSL parser + planner
@@ -229,6 +228,7 @@ sherd/
 │   └── config/           # settings model, migration
 ├── pkg/
 │   ├── format/           # PUBLIC: parsers/writers for .md, .canvas, .base
+│   │   └── markdown/     #   goldmark extensions, AST, byte-range positions
 │   └── pluginsdk/        # PUBLIC: Go SDK for building WASM plugins
 ├── web/                  # frontend (GPL, unminified sources)
 ├── docs/
@@ -984,7 +984,7 @@ sherd doctor            # diagnose index, permissions, watchers, config
 
 | ID | Requirement |
 |---|---|
-| QA-001 | Unit coverage ≥ 80% on `internal/`, ≥ 95% on `internal/mdast`, `internal/index`, `internal/vault`, and `internal/sync`. |
+| QA-001 | Unit coverage ≥ 80% on `internal/`, ≥ 95% on `pkg/format`, `internal/index`, `internal/vault`, and `internal/sync`. *`internal/mdast` was folded into `pkg/format` in v1.5; the 95% bar moved with the code.* |
 | QA-002 | **Golden-file conformance corpus** in `testdata/conformance/`: ≥ 500 Markdown inputs with expected AST, expected extracted metadata, and expected rendered HTML. This is the single highest-value test asset — build it first, grow it with every bug. |
 | QA-003 | Property-based tests: for any note N, `parse(render_source(parse(N))) == parse(N)`; for any frontmatter F, `write(read(F))` is byte-identical when no key is modified. |
 | QA-004 | Fuzz targets (`go test -fuzz`) for: the Markdown parser, the search DSL parser, the formula evaluator, the `.canvas` loader, the `.base` loader, and the sync wire decoder. Run continuously in CI (OSS-Fuzz if accepted). |
@@ -1041,6 +1041,18 @@ At that point you have a useful tool with zero UI, and every subsequent layer is
 ---
 
 ## Appendix B — Change log
+
+### v1.5 — 2026-08-22
+
+| Change | Requirement | Reason |
+|---|---|---|
+| Amended | §4.3 module layout | `internal/mdast` is removed; the goldmark extensions, AST, and byte-range positions live in `pkg/format/markdown`. The layout contradicted `ARC-MOD-001`: a parser cannot be both the contents of `internal/` and a library anyone can import. Since the whole point of `pkg/format` is that third parties can parse Sherd's dialect without vendoring the application, the parser is what has to be public. |
+| Amended | `QA-001` | The 95% coverage floor followed the code from `internal/mdast` to `pkg/format`. |
+
+Found while starting P0.1. `PLAN.md` had already written the delivery as
+`pkg/format/mdast`, so the plan and the spec disagreed; this resolves it in the
+plan's favour, on the grounds that `ARC-MOD-001` is a requirement and the
+layout tree is a description of one.
 
 ### v1.4 — 2026-08-21
 

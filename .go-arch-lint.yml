@@ -20,7 +20,7 @@ allow:
 
 components:
   # ---- Public API. Must not import internal/. ----
-  format:      { in: pkg/format/** }
+  format:      { in: pkg/format/** }   # includes pkg/format/markdown (spec v1.5)
   pluginsdk:   { in: pkg/pluginsdk/** }
 
   # ---- Binaries. May wire anything together. ----
@@ -34,7 +34,6 @@ components:
 
   # ---- Implementation packages. ----
   vault:       { in: internal/vault/** }
-  mdast:       { in: internal/mdast/** }
   index:       { in: internal/index/** }
   graph:       { in: internal/graph/** }
   query:       { in: internal/query/** }
@@ -64,7 +63,6 @@ deps:
       - format
       - pluginsdk
       - vault
-      - mdast
       - index
       - graph
       - query
@@ -98,14 +96,12 @@ deps:
 
   vault:
     mayDependOn: [obs, format, config]
-  mdast:
-    mayDependOn: [obs, format]
   index:
-    mayDependOn: [obs, format, mdast, vault, config]
+    mayDependOn: [obs, format, vault, config]
   graph:
     mayDependOn: [obs, format, index]
   query:
-    mayDependOn: [obs, format, index, mdast]
+    mayDependOn: [obs, format, index]
   bases:
     mayDependOn: [obs, format, index, query, vault]
   canvas:
@@ -119,13 +115,12 @@ deps:
   sync:
     mayDependOn: [obs, format, vault, index, config]
   publish:
-    mayDependOn: [obs, format, mdast, index, query, vault, config]
+    mayDependOn: [obs, format, index, query, vault, config]
   rpc:
     mayDependOn:
       - obs
       - format
       - vault
-      - mdast
       - index
       - graph
       - query

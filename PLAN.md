@@ -206,7 +206,7 @@ the redaction rule is asserted end to end against a real log file.
 - AST nodes carry byte-offset ranges into source — **design this in from the first commit**, it is not retrofittable.
 - Block-level incremental reparse: a change inside one block reparses that block and its containing structure only.
 - Panic-free guarantee: fuzz target from day one; malformed input degrades, never crashes.
-- **Delivers:** `pkg/format/mdast`, byte-range invariants, fuzz target.
+- **Delivers:** `pkg/format/markdown`, byte-range invariants, fuzz target.
 - **Covers:** `FR-MD-001`, `FR-MD-002`, `FR-MD-003`, `FR-MD-004`, `FR-MD-005`, `ARC-MOD-001`.
 - **Done when:** CommonMark suite 100%; every AST node's range round-trips to its exact source bytes; 24 h fuzz with zero crashes.
 
@@ -1017,7 +1017,7 @@ Nothing ships until every line is true.
 
 - [ ] All B … P6 phase gates passed and recorded.
 - [ ] Conformance corpus ≥ 500 cases, green on all Tier-1 targets (`QA-002`).
-- [ ] Coverage: ≥ 80% on `internal/`, ≥ 95% on `mdast`, `index`, `vault`, `sync` (`QA-001`).
+- [ ] Coverage: ≥ 80% on `internal/`, ≥ 95% on `pkg/format`, `index`, `vault`, `sync` (`QA-001`).
 - [ ] Fuzz targets running continuously; 7 days with zero new crashers (`QA-004`).
 - [ ] `-race` clean; concurrent-client deadlock stress clean (`QA-005`).
 - [ ] Sync harness: 10,000 randomized runs, zero lost operations (`QA-006`).
