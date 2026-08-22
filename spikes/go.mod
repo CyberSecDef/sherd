@@ -7,6 +7,7 @@ go 1.25.0
 
 require (
 	github.com/RoaringBitmap/roaring/v2 v2.14.5 // indirect
+	github.com/automerge/automerge-go v0.0.0-20241030180337-6fb4f2d08244 // indirect
 	github.com/bits-and-blooms/bitset v1.24.2 // indirect
 	github.com/blevesearch/bleve/v2 v2.6.0 // indirect
 	github.com/blevesearch/bleve_index_api v1.3.11 // indirect
