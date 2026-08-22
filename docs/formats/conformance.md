@@ -72,6 +72,12 @@ Keeping a strict mode in `pkg/format` is what makes the first claim testable.
 | `literal` | no | Literal text for leaf nodes |
 | `attrs` | no | Node-specific attributes, keys sorted |
 
+A `range` is the **contiguous hull** of the node's extent, not a list of the
+bytes it owns. A paragraph spanning two lines of a blockquote covers the `> `
+prefix between them, because one half-open range cannot express a gap. Expected
+ASTs in this corpus are written that way, so a case asserting otherwise is
+asserting something the parser will never produce.
+
 **`range` is mandatory on every node, and the harness rejects an AST without
 it.** This is deliberate. `FR-MD-003` requires byte-offset ranges for
 source↔render mapping and surgical edits; `PLAN.md` risk R3 is that ranges get

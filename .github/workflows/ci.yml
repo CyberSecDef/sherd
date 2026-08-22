@@ -41,8 +41,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: Install tooling
         run: make tools
@@ -105,8 +104,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: Build
         run: go build ./...
@@ -127,7 +125,7 @@ jobs:
         with:
           go-version: ${{ env.GO_FLOOR_VERSION }}
           cache: true
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: The declared minimum Go version must actually work
         run: |
@@ -152,8 +150,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: Build for ${{ matrix.target }} (NFR-PLAT-001)
         env:
@@ -171,8 +168,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: Build a static linux/amd64 binary
         run: go build -trimpath -o sherd-static ./cmd/sherd
@@ -208,8 +204,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: Core must compile for android/arm64 and ios/arm64 (FR-MOB-001)
         run: |
@@ -231,6 +226,33 @@ jobs:
           echo "dies quietly (X.4.2)."
 
   # ---------------------------------------------------------------------------
+  # A minute per target is a smoke test, not the requirement. FR-MD-005 asks
+  # for 24 hours clean, which the nightly workflow accumulates; this job exists
+  # so a pull request that reintroduces a known crasher fails on the seed
+  # corpus before anyone waits for the night.
+  fuzz:
+    name: Fuzz (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+          cache-dependency-path: go.sum
+      - name: Parser (FR-MD-005)
+        run: go test ./pkg/format/markdown/ -run '^$' -fuzz FuzzParse -fuzztime 60s
+      - name: Incremental reparse (FR-MD-004)
+        run: go test ./pkg/format/markdown/ -run '^$' -fuzz FuzzReparse -fuzztime 60s
+      - name: Keep the failing input
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-failures
+          path: pkg/format/markdown/testdata/fuzz/
+          if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
   vuln:
     name: Vulnerabilities
     runs-on: ubuntu-latest
@@ -240,8 +262,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
       - name: govulncheck (NFR-SEC-009)
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -257,8 +278,7 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
-          # No go.sum yet (no dependencies). Key the cache off go.mod instead.
-          cache-dependency-path: go.mod
+          cache-dependency-path: go.sum
 
       - name: The same source must produce the same bytes (NFR-PLAT-002)
         run: |

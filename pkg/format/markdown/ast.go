@@ -52,10 +52,19 @@ type Document struct {
 	// Document built by hand — in a test, say — should get.
 	opts Options
 
-	// refDefs records whether the document contains a link reference
-	// definition, which makes any block's rendering depend on the whole file.
-	// Computed once, because Reparse needs it on every edit.
-	refDefs bool
+	// guessed records that some node in this tree had no position of its own
+	// and was placed from the gap between its neighbours. Those placements
+	// depend on what else is in the document, so the same block can land
+	// differently when parsed inside a slice than inside the whole file, and
+	// Reparse declines the incremental path rather than produce a tree that
+	// disagrees with a full parse.
+	guessed bool
+
+	// docScoped records whether the document contains a definition whose scope
+	// is the whole file — a link reference definition or a footnote — which
+	// makes every block's rendering depend on bytes outside it. Computed once,
+	// because Reparse needs it on every edit.
+	docScoped bool
 }
 
 // Walk calls fn for every node in document order, depth first. Returning false

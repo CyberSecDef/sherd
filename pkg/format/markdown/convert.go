@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/yuin/goldmark/ast"
+	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -20,30 +21,55 @@ func Parse(source []byte, opts Options) *Document {
 	gm := converter(opts.Flavor)
 	root := gm.Parser().Parse(text.NewReader(source))
 
-	b := &builder{src: source}
+	b := &builder{src: source, expanded: map[ast.Node]bool{}}
 	n := b.build(root)
 	// The document is the file, whatever goldmark attributed to its children.
 	n.Range = Range{0, len(source)}
 
-	// Three passes, in an order the work forces. A node cannot be widened over
-	// its delimiters until its positionless descendants have been placed, and
-	// overlaps cannot be repaired until everything has been widened.
-	b.fillUnset(n, len(source))
-	b.expandTree(root, n)
-	b.repair(n)
+	// Expansion runs twice around the fill, and the order is forced from both
+	// sides. A setext heading claims the line below it, so until it has done
+	// so that line looks like empty space and the fill hands it to whatever
+	// node it is placing — which is how "0\n-\n*" ends up with its list on
+	// the heading's underline. But a node cannot be widened over its own
+	// delimiters until its positionless descendants have been placed either.
+	// So: widen everything already positioned, place the rest in what is
+	// genuinely left, then widen those.
+	b.expandTree(root, n, len(source), false)
+	b.fillUnset(n, 0, len(source))
+	b.expandTree(root, n, len(source), true)
 	mergeText(n)
 
-	doc := &Document{Source: source, Root: n, opts: opts}
+	doc := &Document{Source: source, Root: n, opts: opts, guessed: b.guessed}
 	n.Walk(func(c *Node) bool {
-		if c.Type == "link_reference_definition" {
-			doc.refDefs = true
+		if isDocumentScoped(c.Type) {
+			doc.docScoped = true
 		}
-		return !doc.refDefs
+		return !doc.docScoped
 	})
 	return doc
 }
 
-type builder struct{ src []byte }
+type builder struct {
+	src      []byte
+	expanded map[ast.Node]bool
+
+	// guessed records that at least one node had no position of its own and
+	// was placed from the gap around it. See Document.guessed.
+	guessed bool
+}
+
+// complete reports whether a node and everything under it has a position.
+func complete(n *Node) bool {
+	if !n.Range.isSet() {
+		return false
+	}
+	for _, c := range n.Children {
+		if !complete(c) {
+			return false
+		}
+	}
+	return true
+}
 
 // build converts one goldmark node and everything under it, giving each node
 // the extent goldmark recorded plus its children's. Delimiters are added
@@ -60,10 +86,9 @@ func (b *builder) build(gn ast.Node) *Node {
 		out.Range = union(out.Range, child.Range)
 	}
 
-	// Some nodes carry no position at all — a thematic break, an autolink, a
-	// string synthesized by an extension. Where such a node sits between two
-	// siblings that do have positions, its extent is the gap between them.
-	b.fillFromSiblings(out)
+	// Nodes that carry no position at all — a thematic break, an autolink, a
+	// string synthesized by an extension — are left unset here and placed by
+	// fillUnset, which runs top-down and can see bounds this pass cannot.
 	b.setAttrs(gn, out)
 	return out
 }
@@ -83,7 +108,16 @@ func (b *builder) ownSpan(gn ast.Node) (Range, bool) {
 		return r, ok
 	}
 	if gn.Type() == ast.TypeBlock {
-		return segmentsSpan(gn.Lines())
+		r, ok := segmentsSpan(gn.Lines())
+		if ok && r.Len() == 0 {
+			// A zero-width span says nothing about where the block is, and
+			// goldmark's is not always even near it: an empty ATX heading
+			// reports a position past the blank lines that follow it. Treating
+			// it as no position at all puts the block back in the hands of the
+			// gap fill, which at least knows what its neighbours are.
+			return unsetRange, false
+		}
+		return r, ok
 	}
 	return unsetRange, false
 }
@@ -107,19 +141,42 @@ func segmentsSpan(segs *text.Segments) (Range, bool) {
 // "## " has to be claimed first — otherwise the blockquote looks left from the
 // wrong place and finds nothing. Each level claims one marker and leaves the
 // outer ones to its ancestors, so nesting works to any depth.
-func (b *builder) expandTree(gn ast.Node, out *Node) {
+//
+// Repair sits between the children and the parent for the same reason. A node
+// whose sibling reports a stale offset has a hull that understates where its
+// content ends, and a parent widened from that hull lands its delimiter in the
+// wrong place — " *__0____*" closes its emphasis two bytes early.
+func (b *builder) expandTree(gn ast.Node, out *Node, outerHi int, final bool) {
 	i := 0
 	for c := gn.FirstChild(); c != nil && i < len(out.Children); c = c.NextSibling() {
-		b.expandTree(c, out.Children[i])
+		b.expandTree(c, out.Children[i], outerHi, final)
 		i++
+	}
+	if final {
+		b.repairChildren(out, outerHi)
 	}
 	for _, c := range out.Children {
 		out.Range = union(out.Range, c.Range)
 	}
-	b.expand(gn, out)
+	// On the first pass only nodes whose subtree is fully positioned are
+	// widened, because a node with an unplaced descendant has a hull that
+	// understates it. Expansion is not idempotent — running it twice on a
+	// setext heading would annex a second underline — so what has been done
+	// is recorded rather than repeated.
+	if !b.expanded[gn] && (final || complete(out)) {
+		b.expand(gn, out)
+		b.expanded[gn] = true
+	}
+
+	// Expansion works from positions that may themselves have come from a gap
+	// fill, so this is the one place that guarantees no inverted range reaches
+	// a caller regardless of what any individual rule did.
+	if out.Range.End < out.Range.Start {
+		out.Range.End = out.Range.Start
+	}
 }
 
-// repair resolves sibling ranges that overlap after expansion.
+// repairChildren resolves sibling ranges that overlap after expansion.
 //
 // goldmark reuses the position of a delimiter run when it splits one, so a
 // text node left over from a partly-consumed run of asterisks reports the
@@ -127,17 +184,46 @@ func (b *builder) expandTree(gn ast.Node, out *Node) {
 // The literal is right even when the offset is not, so the fix is to look for
 // the literal where it must now be. Where that fails the range is clamped,
 // which loses precision but keeps the invariants callers depend on.
-func (b *builder) repair(n *Node) {
-	prevEnd := n.Range.Start
+func (b *builder) repairChildren(n *Node, outerHi int) {
+	prev := -1
 	for _, c := range n.Children {
-		if c.Range.Start < prevEnd {
-			c.Range = b.relocate(c, prevEnd, n.Range.End)
+		if prev >= 0 && c.Range.Start < prev {
+			c.Range = b.relocate(n, c, prev, outerHi)
+			b.clampTo(c, c.Range)
 		}
-		if c.Range.End > n.Range.End {
-			c.Range.End = n.Range.End
-		}
-		prevEnd = c.Range.End
-		b.repair(c)
+		prev = c.Range.End
+	}
+}
+
+// clampTo confines a subtree to a range its root has just been moved into.
+//
+// A node placed from the gap between its siblings is placed before those
+// siblings have been widened over their delimiters, so it can be sitting on
+// bytes a sibling then claims — "~~~\n~~~\n- " puts the trailing list on the
+// closing fence's line, and the fence takes that line back. Moving the node
+// alone would leave its children behind, outside their own parent.
+//
+// A text node's literal is redefined as the bytes it now covers, because for a
+// text node those are the same thing by definition, and a literal that
+// disagrees with its range is the one thing no consumer can work around.
+func (b *builder) clampTo(n *Node, r Range) {
+	if n.Range.Start < r.Start {
+		n.Range.Start = r.Start
+	}
+	if n.Range.Start > r.End {
+		n.Range.Start = r.End
+	}
+	if n.Range.End > r.End {
+		n.Range.End = r.End
+	}
+	if n.Range.End < n.Range.Start {
+		n.Range.End = n.Range.Start
+	}
+	if n.Type == "text" {
+		n.Literal = string(b.src[n.Range.Start:n.Range.End])
+	}
+	for _, c := range n.Children {
+		b.clampTo(c, n.Range)
 	}
 }
 
@@ -172,10 +258,25 @@ func mergeText(n *Node) {
 	n.Children = out
 }
 
-func (b *builder) relocate(c *Node, lo, hi int) Range {
-	if c.Literal != "" && lo <= hi && hi <= len(b.src) {
+func (b *builder) relocate(parent, c *Node, lo, hi int) Range {
+	if hi > len(b.src) {
+		hi = len(b.src)
+	}
+	if lo > hi {
+		return Range{lo, lo}
+	}
+	if c.Literal != "" {
 		if i := strings.Index(string(b.src[lo:hi]), c.Literal); i >= 0 {
 			return Range{lo + i, lo + i + len(c.Literal)}
+		}
+	}
+	if len(c.Children) == 0 && c.Literal == "" {
+		// It had no position of its own and was placed from a gap that has
+		// since been claimed — a node put on a setext underline before the
+		// heading above widened over it. Place it again from what is left,
+		// which is what it would have got had the order been different.
+		if r := b.fillRange(parent, c, lo, hi, false); r.Start >= lo && r.End <= hi {
+			return r
 		}
 	}
 	r := Range{lo, c.Range.End}
@@ -205,6 +306,10 @@ func (b *builder) expand(gn ast.Node, out *Node) {
 		b.expandEmphasis(v, out)
 	case *ast.CodeSpan:
 		b.expandCodeSpan(out)
+	case *east.TableHeader, *east.TableRow:
+		b.expandTableRow(out)
+	case *east.Table:
+		b.expandTable(out)
 	case *ast.Link:
 		b.expandBracketed(out, false, v.Destination)
 	case *ast.Image:
@@ -214,30 +319,40 @@ func (b *builder) expand(gn ast.Node, out *Node) {
 
 // expandHeading covers both heading forms. ATX headings own the leading run of
 // "#" and any closing run; a setext heading owns the underline on the line
-// below, which is why the absence of a leading "#" is what distinguishes them.
+// below.
+//
+// Which form it is has to be settled before the underline is looked for, and
+// "there is no # to the left" is not the test: an empty ATX heading is just
+// "#", with its range already over the hash and nothing to its left. Reading
+// that as setext makes it annex whatever is on the next line, so "#\n--"
+// becomes one heading and the paragraph disappears.
 func (b *builder) expandHeading(out *Node) {
-	start := b.expandLeftOverRun(out.Range.Start, func(c byte) bool { return c == '#' })
-	if start < out.Range.Start {
+	start := b.expandLeftOverRun(out.Range.Start, isHash)
+	atx := start < out.Range.Start ||
+		(out.Range.Start < len(b.src) && b.src[out.Range.Start] == '#')
+
+	if atx {
 		out.Range.Start = start
-		if end := b.expandRightOverRun(out.Range.End, func(c byte) bool { return c == '#' }); end > out.Range.End {
+		if end := b.expandRightOverRun(out.Range.End, isHash); end > out.Range.End {
 			out.Range.End = end
 		}
 		return
 	}
+
 	// Setext: the underline is the next line.
 	nl := b.lineEnd(out.Range.End)
 	if nl >= len(b.src) {
 		return
 	}
 	under := b.src[nl+1 : b.lineEnd(nl+1)]
-	if t := strings.TrimRight(strings.TrimLeft(string(under), " \t"), " \t"); t != "" &&
+	if t := strings.Trim(string(under), " \t"); t != "" &&
 		(strings.Trim(t, "=") == "" || strings.Trim(t, "-") == "") {
 		out.Range.End = b.lineEnd(nl + 1)
 	}
 }
 
-// expandFence covers the opening fence line, including its info string, and
-// the closing fence line when the block is terminated.
+func isHash(c byte) bool { return c == '#' }
+
 func (b *builder) expandFence(v *ast.FencedCodeBlock, out *Node) {
 	// Find the line the opening fence is on. The info string is on it when
 	// there is one; otherwise the fence is the line above the first content
@@ -255,20 +370,150 @@ func (b *builder) expandFence(v *ast.FencedCodeBlock, out *Node) {
 		}
 		line = b.lineStart(ls - 1)
 	}
-	if i := b.indexInLine(line, isFence); i >= 0 {
-		out.Range.Start = i
+	open := b.indexInLine(line, isFence)
+	if open < 0 {
+		return
 	}
+	if out.Range.End < open {
+		// The block has no content lines, so its range came from the gap
+		// between its neighbours and can sit before the fence rather than
+		// after it. The fence line is the block.
+		out.Range.End = b.lineEnd(open)
+	}
+	out.Range.Start = open
+	char, width := b.src[open], b.fenceRun(open)
 
 	// The closing fence, when present, is the line beginning where the content
-	// ends. An unterminated block simply has none.
-	if closeStart := out.Range.End; closeStart < len(b.src) && b.lineStart(closeStart) == closeStart {
-		if i := b.indexInLine(closeStart, isFence); i >= 0 {
-			out.Range.End = b.lineEnd(closeStart)
+	// ends. It has to be a fence that could close this one: same character, at
+	// least as long, and nothing before it but indentation or container
+	// markers. Accepting any backtick lets a lone "`" close a "```" block and
+	// annex whatever follows.
+	closeStart := out.Range.End
+	if closeStart >= len(b.src) || b.lineStart(closeStart) != closeStart {
+		return
+	}
+	i := b.indexInLine(closeStart, isFence)
+	if i < 0 || b.src[i] != char || b.fenceRun(i) < width {
+		return
+	}
+	for j := closeStart; j < i; j++ {
+		if !isSpace(b.src[j]) && b.src[j] != '>' {
+			return
+		}
+	}
+	out.Range.End = b.lineEnd(closeStart)
+}
+
+// fenceRun returns the length of the run of fence characters starting at pos.
+func (b *builder) fenceRun(pos int) int {
+	n := 0
+	for i := pos; i < len(b.src) && b.src[i] == b.src[pos]; i++ {
+		n++
+	}
+	return n
+}
+
+func isFence(c byte) bool { return c == '`' || c == '~' }
+
+// expandTable covers the table's lines, including the delimiter row.
+//
+// The table is line-oriented but carries no position of its own, so without
+// the first line it covers only the text inside its cells, losing every pipe.
+// The delimiter row needs naming separately because no node stands for it: in
+// a table with a header and no body rows, the "|---|" line would otherwise sit
+// outside every range in the document, and the next positionless node placed
+// from that gap would land on it.
+func (b *builder) expandTable(out *Node) {
+	out.Range = Range{b.lineStart(out.Range.Start), b.lineEnd(out.Range.End)}
+	if len(out.Children) == 0 || out.Children[0].Type != "table_header" {
+		return
+	}
+	if nl := b.lineEnd(out.Children[0].Range.End); nl < len(b.src) {
+		if end := b.lineEnd(nl + 1); end > out.Range.End {
+			out.Range.End = end
 		}
 	}
 }
 
-func isFence(c byte) bool { return c == '`' || c == '~' }
+// expandTableRow places a row and its cells on the row's own line.
+//
+// Cells cannot be placed from the gaps between their neighbours the way other
+// positionless nodes are. A table row may hold empty cells — a row with fewer
+// fields than the header has columns gets them added — and an empty cell asked
+// to fill the gap around it takes the delimiter line or the row below, which
+// then displaces every cell after it. So the row's line is found from the
+// first cell that has content, and the pipes on that line say where the rest
+// begin and end.
+func (b *builder) expandTableRow(out *Node) {
+	anchor := -1
+	for _, c := range out.Children {
+		if len(c.Children) > 0 {
+			anchor = c.Range.Start
+			break
+		}
+	}
+	if anchor < 0 {
+		return
+	}
+
+	ls, le := b.lineStart(anchor), b.lineEnd(anchor)
+	out.Range = Range{ls, le}
+
+	// Where the fields and goldmark's cells disagree — a leading pipe after
+	// leading spaces makes them count fields differently — ordering is
+	// enforced over both, since a cell that starts before the one before it
+	// ended is unusable whatever the field boundaries say.
+	fields := b.splitCells(ls, le)
+	prev := ls
+	for i, c := range out.Children {
+		r := Range{le, le}
+		if i < len(fields) {
+			r = b.trim(fields[i])
+		}
+		// Keep what the cell already had only if it has content, and only
+		// where that content lies on this row's line. A cell with no children
+		// has no position of its own — it was placed from the gap around it,
+		// which may be the delimiter line, the row below, or the next field.
+		if len(c.Children) > 0 && c.Range.Start >= ls && c.Range.End <= le {
+			r = union(r, c.Range)
+		}
+		if r.Start < prev {
+			r.Start = prev
+		}
+		if r.End < r.Start {
+			r.End = r.Start
+		}
+		c.Range = r
+		b.clampTo(c, r)
+		prev = r.End
+	}
+}
+
+// splitCells returns the field extents on a table line. A leading or trailing
+// pipe is a delimiter rather than an empty field, which is why the empty
+// extents at the ends are dropped.
+func (b *builder) splitCells(ls, le int) []Range {
+	var out []Range
+	start := ls
+	for i := ls; i < le; i++ {
+		switch b.src[i] {
+		case '\\':
+			i++
+		case '|':
+			out = append(out, Range{start, i})
+			start = i + 1
+		}
+	}
+	out = append(out, Range{start, le})
+
+	if len(out) > 1 && out[0].Len() == 0 {
+		out = out[1:]
+	}
+	if len(out) > 1 && out[len(out)-1].Len() == 0 {
+		out = out[:len(out)-1]
+	}
+	return out
+}
 
 func (b *builder) expandIndentedCode(out *Node) {
 	ls := b.lineStart(out.Range.Start)
@@ -281,6 +526,9 @@ func (b *builder) expandIndentedCode(out *Node) {
 }
 
 func (b *builder) expandEmphasis(v *ast.Emphasis, out *Node) {
+	if len(out.Children) == 0 {
+		return
+	}
 	n := v.Level
 	s, e := out.Range.Start-n, out.Range.End+n
 	if s < 0 || e > len(b.src) {
@@ -309,6 +557,9 @@ func runOf(s []byte) bool {
 // across several lines has a line ending between its opening run and its
 // first content byte.
 func (b *builder) expandCodeSpan(out *Node) {
+	if len(out.Children) == 0 {
+		return
+	}
 	s := out.Range.Start
 	for s > 0 && isWhitespace(b.src[s-1]) {
 		s--
@@ -335,15 +586,20 @@ func (b *builder) expandCodeSpan(out *Node) {
 
 // expandBracketed covers links and images: the square brackets around the
 // label, the destination that follows, and an image's leading "!".
+//
+// The opening bracket must be the byte immediately before the label. Searching
+// backwards for one instead finds the wrong bracket whenever another appears
+// earlier in the line.
 func (b *builder) expandBracketed(out *Node, image bool, dest []byte) {
-	open := -1
-	for i := out.Range.Start - 1; i >= 0; i-- {
-		if b.src[i] == '[' {
-			open = i
-			break
-		}
+	if len(out.Children) == 0 {
+		// No label, so the node had no position of its own and was placed from
+		// the gap between its neighbours — a gap that already spans its
+		// brackets. Expanding again claims a bracket belonging to something
+		// else, which is what "0[[]()]" does.
+		return
 	}
-	if open < 0 {
+	open := out.Range.Start - 1
+	if open < 0 || b.src[open] != '[' {
 		return
 	}
 	if image {
@@ -410,36 +666,6 @@ func (b *builder) matchDelimiter(pos int, open, close byte) int {
 	return -1
 }
 
-// fillFromSiblings gives a positionless child the gap between its neighbours,
-// trimmed of surrounding whitespace. It runs while the parent's own extent is
-// still being assembled, so it only helps where both neighbours are known;
-// anything left over is resolved top-down by fillUnset.
-func (b *builder) fillFromSiblings(parent *Node) {
-	for i, c := range parent.Children {
-		if c.Range.isSet() {
-			continue
-		}
-		lo, hi := -1, -1
-		for j := i - 1; j >= 0; j-- {
-			if parent.Children[j].Range.isSet() {
-				lo = parent.Children[j].Range.End
-				break
-			}
-		}
-		for j := i + 1; j < len(parent.Children); j++ {
-			if parent.Children[j].Range.isSet() {
-				hi = parent.Children[j].Range.Start
-				break
-			}
-		}
-		if lo < 0 || hi < 0 || hi < lo {
-			continue
-		}
-		c.Range = b.fillRange(parent, lo, hi)
-		parent.Range = union(parent.Range, c.Range)
-	}
-}
-
 // fillUnset resolves whatever remains, top-down, inside the bounds its parent
 // now has. By the time a node is visited its own range is known, so its
 // children always have bounds to divide.
@@ -448,48 +674,106 @@ func (b *builder) fillFromSiblings(parent *Node) {
 // grandparent's end. A container whose only child had no position is itself
 // too small to hold that child once it is placed, so the child is bounded by
 // the outer limit and the container grows to fit it.
-func (b *builder) fillUnset(n *Node, outerHi int) {
+func (b *builder) fillUnset(n *Node, outerLo, outerHi int) {
 	lo := n.Range.Start
 	for i, c := range n.Children {
-		hi := n.Range.End
+		hi, fromSibling := n.Range.End, false
 		for j := i + 1; j < len(n.Children); j++ {
 			if n.Children[j].Range.isSet() {
-				hi = n.Children[j].Range.Start
+				hi, fromSibling = n.Children[j].Range.Start, true
 				break
 			}
 		}
 		if !c.Range.isSet() {
-			if hi <= lo && outerHi > hi {
-				hi = outerHi
+			// No room between the neighbours means the parent's own range was
+			// derived from too few children and is too small. Which way to
+			// widen depends on where the child sits: a first child belongs
+			// before everything the parent knows about — a table's header row
+			// carries no position, so the table appears to start at its second
+			// row — and a later one belongs after.
+			if hi <= lo {
+				if i == 0 && outerLo < lo {
+					lo = outerLo
+				} else if outerHi > hi {
+					hi = outerHi
+				}
 			}
-			c.Range = b.fillRange(n, lo, hi)
+			// A container may span lines, but not when another positionless
+			// sibling is still waiting for room in the same gap.
+			more := false
+			for j := i + 1; j < len(n.Children); j++ {
+				if !n.Children[j].Range.isSet() {
+					more = true
+					break
+				}
+			}
+			if fromSibling && !more && spansLines(c.Type) {
+				// A container is allowed to run past a line ending, so the
+				// sibling's own line has to be kept out of reach. goldmark
+				// reports an empty heading as a zero-width position after its
+				// "#", and without this the blockquote before it swallows the
+				// marker.
+				if ls := b.lineStart(hi); ls > lo {
+					hi = ls
+				}
+			}
+			c.Range = b.fillRange(n, c, lo, hi, more)
 			n.Range = union(n.Range, c.Range)
 		}
+		// A child inherits the outer bounds at the edges, because a parent
+		// whose range was derived from too few children is too small at
+		// exactly those edges, and its children would inherit the error.
+		childLo, childHi := lo, hi
+		if i == 0 {
+			childLo = minInt(lo, outerLo)
+		}
+		if i == len(n.Children)-1 {
+			childHi = maxInt(hi, outerHi)
+		}
+		b.fillUnset(c, childLo, maxInt(childHi, c.Range.End))
 		lo = c.Range.End
-		b.fillUnset(c, maxInt(hi, c.Range.End))
 	}
 }
 
 // fillRange places a node that carries no position of its own, given the gap
 // its neighbours leave.
 //
-// Two things narrow the gap. A node without a position is a single line — a
-// thematic break, an empty list item, an empty code fence — so the fill stops
-// at the first line ending; without that, an empty list item swallows the
-// bullet of the item after it and every following range shifts. And where the
-// parent is a container, its own marker is skipped, so a thematic break inside
-// a list item is the "* * *" rather than the "- * * *".
-func (b *builder) fillRange(parent *Node, lo, hi int) Range {
+// Two things narrow the gap. Most nodes without a position occupy a single
+// line — a thematic break, an empty list item, an empty code fence — so the
+// fill stops at the first line ending; without that, an empty list item
+// swallows the bullet of the item after it and every following range shifts.
+// Containers are the exception, since a list of empty items still runs down
+// the page — unless a sibling behind them also needs placing, in which case a
+// container that took the whole gap would leave nothing for it. And where the parent is a container, its own marker is skipped, so
+// a thematic break inside a list item is the "* * *" rather than the
+// "- * * *".
+func (b *builder) fillRange(parent, child *Node, lo, hi int, oneLine bool) Range {
+	b.guessed = true
 	r := b.trim(Range{lo, hi})
 	if parent.Type == "list_item" || parent.Type == "blockquote" {
 		r = b.trim(Range{b.skipContainerMarker(r), r.End})
 	}
-	for i := r.Start; i < r.End; i++ {
-		if b.src[i] == '\n' {
-			return Range{r.Start, i}
+	if oneLine || !spansLines(child.Type) {
+		for i := r.Start; i < r.End; i++ {
+			if b.src[i] == '\n' {
+				r.End = i
+				break
+			}
 		}
 	}
-	return r
+	// Trim again: cutting at the line ending can expose trailing spaces that
+	// the first trim could not see past. Without this the same node comes out
+	// a byte longer when the gap happens to extend beyond its line, which is
+	// exactly how a full parse and an incremental one drift apart.
+	return b.trim(r)
+}
+
+// spansLines reports whether a node may cover more than one line even with no
+// content of its own to prove it. Only the containers can: a list of empty
+// items still runs down the page, while a thematic break, an empty list item,
+// and an empty code fence are each one line by construction.
+func spansLines(typ string) bool {
+	return typ == "list" || typ == "blockquote"
 }
 
 // skipContainerMarker steps over a leading bullet, ordered marker, or ">".
@@ -517,6 +801,13 @@ func (b *builder) skipContainerMarker(r Range) int {
 		return r.Start
 	}
 	return i
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func maxInt(a, b int) int {
@@ -612,6 +903,12 @@ func (b *builder) expandRightOverRun(pos int, marker func(byte) bool) int {
 func (b *builder) expandLeftOverBullet(pos int) int {
 	i := b.skipSpacesLeft(pos)
 	if i > 0 && b.src[i-1] == '\n' {
+		if b.bulletAt(pos) {
+			// The item already begins at its own marker, so the marker on the
+			// line above belongs to a different item. In "*\n- " the second
+			// list would otherwise reach back and claim the first one's.
+			return pos
+		}
 		i = b.skipSpacesLeft(i - 1)
 	}
 	if i == 0 {
@@ -630,6 +927,29 @@ func (b *builder) expandLeftOverBullet(pos int) int {
 		}
 	}
 	return pos
+}
+
+// bulletAt reports whether a list marker begins at pos.
+func (b *builder) bulletAt(pos int) bool {
+	if pos >= len(b.src) {
+		return false
+	}
+	i := pos
+	switch c := b.src[i]; {
+	case c == '-' || c == '+' || c == '*':
+		i++
+	case isDigit(c):
+		for i < len(b.src) && isDigit(b.src[i]) {
+			i++
+		}
+		if i >= len(b.src) || (b.src[i] != '.' && b.src[i] != ')') {
+			return false
+		}
+		i++
+	default:
+		return false
+	}
+	return i >= len(b.src) || isWhitespace(b.src[i])
 }
 
 func (b *builder) skipSpacesLeft(pos int) int {

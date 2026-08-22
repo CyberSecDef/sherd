@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 The Sherd Authors
 
-GO      ?= go
-GOBIN   := $(shell $(GO) env GOPATH)/bin
-PKGS    := ./...
+GO       ?= go
+FUZZTIME ?= 1m
+GOBIN    := $(shell $(GO) env GOPATH)/bin
+PKGS     := ./...
 
 .DEFAULT_GOAL := help
 
@@ -82,6 +83,11 @@ vault-writes: ## Fail on direct filesystem writes outside internal/vault (ARC-MO
 .PHONY: conformance
 conformance: ## Run the golden-file Markdown corpus (QA-002)
 	$(GO) test ./internal/conformance/... -v
+
+.PHONY: fuzz
+fuzz: ## Fuzz the parser and the incremental reparser (FR-MD-005); FUZZTIME=1m
+	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzParse -fuzztime $(FUZZTIME)
+	$(GO) test ./pkg/format/markdown/ -run '^$$' -fuzz FuzzReparse -fuzztime $(FUZZTIME)
 
 .PHONY: self-test
 self-test: ## Prove the CI guards actually fire (see testdata/ci/)

@@ -55,9 +55,19 @@ func TestReparseTakesTheFastPathWhereItShould(t *testing.T) {
 			why: "any block may resolve a reference, so no block is self-contained",
 		},
 		{
-			name: "editing inside a fenced code block", src: "one\n\n```\nx\n```\n\ntwo\n",
-			old: "x", new: "y", wantFast: false,
-			why: "a fence reparsed alone has nothing left to swallow, so it looks terminated",
+			name: "a document containing an empty list item", src: "one\n\n- \n\nthree\n",
+			old: "one", new: "ONE", wantFast: false,
+			why: "the empty item has no position of its own, so a slice would place it differently",
+		},
+		{
+			name: "editing inside a closed fenced code block", src: "one\n\n```\nx\n```\n\ntwo\n",
+			old: "x", new: "y", wantFast: true,
+			why: "a closed fence is self-contained, and the slice holds both of its fences",
+		},
+		{
+			name: "editing next to an unterminated fence", src: "one\n\n```\nx\n\ntwo\n",
+			old: "two", new: "TWO", wantFast: false,
+			why: "the fence is closed only by what ends the block after it, so changing that block moves it",
 		},
 		{
 			name: "typing a fence into a paragraph", src: "one\n\ntwo\n\nthree\n",
@@ -131,5 +141,52 @@ func TestReparseKeepsTheFlavour(t *testing.T) {
 	})
 	if !found {
 		t.Errorf("reparse lost the Sherd flavour: %s", shape(got))
+	}
+}
+
+// TestFastPathCoversOrdinaryTyping measures what FR-MD-004 is actually for.
+//
+// The corpus-wide differential test in internal/conformance reports a much
+// lower rate, but its documents are the CommonMark suite — deliberately
+// adversarial fragments, many of them a single malformed block. A note someone
+// writes is blocks separated by blank lines, and that is the shape the fast
+// path is built for. Measuring it here keeps a future guard from quietly
+// turning the incremental reparser into a full one.
+func TestFastPathCoversOrdinaryTyping(t *testing.T) {
+	note := "# Meeting notes\n\n" +
+		"Discussed the migration plan with the team. The main risk is the\n" +
+		"schema change, which touches three services.\n\n" +
+		"## Decisions\n\n" +
+		"- Ship the read path first\n" +
+		"- Keep the old column until the backfill completes\n" +
+		"- Revisit the index budget after measuring\n\n" +
+		"## Open questions\n\n" +
+		"Do we need a feature flag for the write path? See the [design doc](/docs/x)\n" +
+		"for the current thinking.\n\n" +
+		"```go\nfunc main() {}\n```\n\n" +
+		"Follow up with **Alex** about the timeline.\n"
+
+	doc := markdown.Parse([]byte(note), markdown.Options{Flavor: markdown.Sherd})
+
+	fast := 0
+	for i := 0; i <= len(note); i++ {
+		e := markdown.Edit{Range: markdown.Range{Start: i, End: i}, Text: []byte("x")}
+		got, incremental := doc.Reparse(e)
+		if incremental {
+			fast++
+		}
+		// Correct on both paths, at every offset.
+		if err := got.Validate(); err != nil {
+			t.Fatalf("offset %d: %v", i, err)
+		}
+		if a, b := shape(got), shape(markdown.Parse(got.Source, markdown.Options{Flavor: markdown.Sherd})); a != b {
+			t.Fatalf("offset %d: reparse disagrees with a full parse\n got: %s\nwant: %s", i, a, b)
+		}
+	}
+
+	pct := fast * 100 / (len(note) + 1)
+	t.Logf("%d of %d single-character insertions reparsed incrementally (%d%%)", fast, len(note)+1, pct)
+	if pct < 85 {
+		t.Errorf("only %d%% of keystrokes took the incremental path; FR-MD-004 is not buying what it should", pct)
 	}
 }

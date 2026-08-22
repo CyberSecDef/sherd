@@ -1,0 +1,5 @@
+go test fuzz v1
+[]byte("00\n* ```\n\n0")
+int(10)
+int(1)
+[]byte("\n")
