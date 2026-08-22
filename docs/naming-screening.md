@@ -22,6 +22,9 @@ than repeated from scratch.
 | `mindshare` | **Rejected** | Two registered `MINDSHARE` marks in software, one covering desktop software |
 | `onyxvault` | **Rejected** | Onyx is a YC-backed open-source enterprise search and knowledge-management platform; and the name reads as an Obsidian soundalike |
 | `cortexicon` | **Passes, with a reservation** | Clean everywhere checked; but contains `CORTEX`, a heavily-used software mark |
+| `notemesh` | **Rejected** | A defunct startup of the same name in knowledge management; 11 same-named note apps; domain held since 2006 |
+| `notehive` | **Rejected** | Live note-taking products on the App Store, Google Play, `notehive.net` and `notehive.app` |
+| `noteforge` | **Rejected** | Live products on Google Play and `noteforge.dev`, the latter a dev note-linking tool |
 
 ## Screening detail
 
@@ -163,6 +166,51 @@ Granite is a local-first tool with zero telemetry and no AI features, so the
 name may set an expectation the product deliberately does not meet. Twelve
 letters is also long for something typed as a command.
 
+### The `Note*` family — rejected as a pattern
+
+`notemesh`, `notehive`, and `noteforge` were screened together. All three fail,
+and they fail for the same structural reason, which is worth recording once
+rather than rediscovering per candidate.
+
+**`notemesh`** — npm, PyPI, and crates.io are free, and that is the end of the
+good news:
+
+- **NoteMesh** was a real startup: a wiki-based *"hyper-local knowledge
+  management system"* for college students, with Crunchbase and Dealroom
+  profiles. Now permanently closed. Defunct is far better than active, but the
+  prior use sits squarely in our field.
+- **`notemesh.com` is registered and actively renewed** — created 2006-05-11,
+  expiring 2027-05-11. `notemesh.app` and `notemesh.dev` are also taken.
+- 11 GitHub repositories named NoteMesh, all note-taking apps, all 0–1 stars.
+
+**`notehive`** — live commercial products under the exact name:
+
+- **NoteHive: AI Note Taker** on the Apple App Store (id6745496490) and Google
+  Play.
+- **`notehive.net`** — a shipping task and note product.
+- **`notehive.app`** — a live note-taking product publishing marketing content.
+- `notehive.com` registered since 2006. 98 GitHub repositories.
+
+**`noteforge`** — the worst of the three on adjacency:
+
+- **Noteforge AI** on Google Play (`com.noteforge`).
+- **`noteforge.dev`** — *"Your Dev Note-Taking App … capture, organize, and
+  **link** dev notes, code snippets, and technical insights"*. That is our
+  feature description, live, under our proposed name.
+- `noteforge.app` registered 2026-01-26 — recent and active.
+- 240 GitHub repositories, the largest at 56 stars. PyPI taken.
+
+**The pattern, and the recommendation.** `Note` + [common noun] is exhausted.
+Every combination tried is occupied by a shipping product, and the ones that are
+not yet occupied are worth little, because a descriptive mark earns thin
+protection: it is hard to register, hard to defend, and hopeless to search for.
+
+The names that succeeded in this category are instructive — Obsidian, Notion,
+Roam, Logseq, Zettlr, Joplin, Bear, Craft. **None of them is `Note`+X.** That is
+not a coincidence: arbitrary and suggestive marks are both legally stronger and
+practically findable. Abandoning the `Note*` family entirely is a better use of
+effort than screening more of it.
+
 ## Not yet screened
 
 From the earlier candidate list, these were the only ones free on npm and
@@ -185,4 +233,12 @@ Each candidate is checked against, in order of how often they kill a name:
    tooling.
 5. USPTO and EUIPO registers — **requires an authoritative query, not web
    search**; treat everything above as preliminary until this is done.
-6. Domains, checked at a registrar rather than by DNS lookup.
+6. Domains, checked by **RDAP** (`https://rdap.org/domain/<name>`) rather than
+   by DNS lookup.
+
+**Method correction, learned the hard way.** `notemesh.com` has no nameserver
+records, which an earlier round of this screening would have read as "possibly
+available". RDAP shows it registered since 2006 and renewed through 2027. A
+domain with no DNS is not an unregistered domain — it is very often a parked or
+defensively-held one. Every "no NS" verdict recorded before this correction
+should be treated as unverified.
