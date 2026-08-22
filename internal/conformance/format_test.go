@@ -199,6 +199,15 @@ func randomEdit(r *lcg, src []byte) markdown.Edit {
 	replacements := []string{
 		"", "x", "\n", "\n\n", "#", "# ", "- ", "> ", "```", "~~~", "*", "**",
 		"`", "[", "]", "](", "[a]: /b", "<div>", "|", "1. ", "    ", "\t",
+		// Indentation arriving on a line after the one the edit starts on.
+		// FuzzReparse found a wrong tree in that shape, where a list reaches
+		// over a blank line to claim a line the edit has just indented, and
+		// every replacement above misses it because each one indents only the
+		// line it lands on. Adding them widens the generator; what pins that
+		// particular regression is the committed seed and the case in
+		// TestReparseTakesTheFastPathWhereItShould, since whether this fixed
+		// seed builds the shape at all depends on the corpus it draws from.
+		"\n  x", "\n\n  x", "\n\tx", "~~", "^ref",
 	}
 	start := r.intn(len(src) + 1)
 	end := start + r.intn(minInt(9, len(src)-start+1))

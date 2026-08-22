@@ -357,7 +357,14 @@ func (d *Document) couldMergeWithAList(i int, old *Node, sub *Document) bool {
 	}
 	// The slice, not the original: an edit can add the indentation that lets
 	// the list above claim the block, and the line was not indented before it.
-	if prev != nil && prev.Type == "list" && sub.lineIsIndented(0) {
+	//
+	// The first line of the slice is the wrong line to ask about. An edit
+	// whose text begins with a newline leaves that line empty and puts the
+	// indentation on the next one, and a blank line does not stop a list from
+	// claiming what follows it — that is the whole reason lists need a check
+	// of their own here. So the question is asked of the first line that has
+	// content on it.
+	if prev != nil && prev.Type == "list" && firstContentLineIsIndented(sub.Source) {
 		return true
 	}
 	return false
@@ -392,6 +399,26 @@ func accountsForItsSource(d *Document) bool {
 		pos = c.Range.End
 	}
 	return isBlank(d.Source[pos:])
+}
+
+// firstContentLineIsIndented reports whether the first line of src that is not
+// blank begins with space or tab.
+//
+// Leading blank lines are skipped rather than answered, because they are not
+// what a list above is deciding about: it continues through them and claims
+// the first line that has something on it.
+func firstContentLineIsIndented(src []byte) bool {
+	for i := 0; i < len(src); {
+		end := i
+		for end < len(src) && src[end] != '\n' {
+			end++
+		}
+		if !isBlank(src[i:end]) {
+			return isSpace(src[i])
+		}
+		i = end + 1
+	}
+	return false
 }
 
 // lineIsIndented reports whether the line containing pos starts with space or

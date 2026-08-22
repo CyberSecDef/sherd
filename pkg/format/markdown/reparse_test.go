@@ -74,6 +74,30 @@ func TestReparseTakesTheFastPathWhereItShould(t *testing.T) {
 			old: "two", new: "```", wantFast: false,
 			why: "the new fence would swallow the blocks after it",
 		},
+		{
+			// Found by FuzzReparse (seed 9d9855606f017035). The replacement
+			// starts with a newline, so the first line of the reparsed slice
+			// is blank and the indentation lands on the second — and the list
+			// above continues through a blank line to claim it.
+			name: "indenting the line after a list, from a newline", src: "* a\n\nx\n",
+			old: "x", new: "\n  y", wantFast: false,
+			why: "the list above claims an indented line even across the blank one, so the slice is not self-contained",
+		},
+		{
+			name: "a newline that leaves the line unindented", src: "* a\n\nx\n",
+			old: "x", new: "\ny", wantFast: true,
+			why: "nothing became indented, so the list above cannot reach it; refusing here would cost the fast path for no safety",
+		},
+		{
+			name: "a list followed by an indented block", src: "1. a\n\n  b\n",
+			old: "a", new: "A", wantFast: false,
+			why: "a list claims whatever follows it indented, blank line or not, so the block after it is not independent of it",
+		},
+		{
+			name: "editing before a fence that never closes", src: "one\n\n```\n",
+			old: "one", new: "ONE", wantFast: false,
+			why: "a fence of one line has no closer, so it grows into whatever an edit leaves after it",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			doc := markdown.Parse([]byte(tc.src), markdown.Options{})
@@ -102,6 +126,29 @@ func shape(d *markdown.Document) string {
 		return true
 	})
 	return sb.String()
+}
+
+// TestReparseOnADocumentWithNoTree. Document's fields are exported, so a
+// caller can hand Reparse one that no Parse produced — an empty tree most
+// easily of all, from a zero value. There is nothing to reparse incrementally
+// then, and the answer still has to be the one a full parse would give.
+func TestReparseOnADocumentWithNoTree(t *testing.T) {
+	doc := &markdown.Document{Source: []byte("hello\n")}
+
+	got, fast := doc.Reparse(markdown.Edit{
+		Range: markdown.Range{Start: 0, End: 5},
+		Text:  []byte("bye"),
+	})
+	if fast {
+		t.Error("incremental = true, want false: there is no tree to amend")
+	}
+	if string(got.Source) != "bye\n" {
+		t.Errorf("source = %q, want %q", got.Source, "bye\n")
+	}
+	want := markdown.Parse(got.Source, markdown.Options{})
+	if a, b := shape(got), shape(want); a != b {
+		t.Errorf("reparse disagrees with a full parse\n got: %s\nwant: %s", a, b)
+	}
 }
 
 // TestReparseSurvivesAnInvalidEdit. Ranges go stale whenever an editor and a
