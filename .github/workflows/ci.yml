@@ -47,34 +47,48 @@ jobs:
       - name: Install tooling
         run: make tools
 
+      # Every policy step below runs even if an earlier one failed, so a
+      # contributor sees all violations at once instead of discovering them one
+      # CI round-trip at a time. The job still fails; it just reports fully.
+
       - name: gofumpt (QA-011)
+        if: ${{ !cancelled() }}
         run: make fmt-check
 
       - name: go vet
+        if: ${{ !cancelled() }}
         run: make vet
 
       - name: staticcheck (QA-011)
+        if: ${{ !cancelled() }}
         run: make lint
 
       - name: gosec (QA-011)
+        if: ${{ !cancelled() }}
         run: make sec
 
       - name: SPDX headers present
+        if: ${{ !cancelled() }}
         run: make spdx-check
 
       - name: Architecture rules (ARC-MOD-001, ARC-MOD-002)
+        if: ${{ !cancelled() }}
         run: make arch
 
       - name: No direct filesystem writes outside internal/vault (ARC-MOD-003)
+        if: ${{ !cancelled() }}
         run: make vault-writes
 
       - name: No analytics or telemetry (NFR-SEC-001)
+        if: ${{ !cancelled() }}
         run: make analytics
 
       - name: Dependency licenses are GPL-3.0-compatible (LEG-005, LEG-006)
+        if: ${{ !cancelled() }}
         run: make licenses-check
 
       - name: Guards actually fire against known-bad fixtures
+        if: ${{ !cancelled() }}
         run: make self-test
 
   # ---------------------------------------------------------------------------
