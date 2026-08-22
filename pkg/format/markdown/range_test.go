@@ -228,6 +228,15 @@ func TestParseDoesNotPanic(t *testing.T) {
 		"", "\n", "*", "**", "`", "```", "[", "![", "[](", ">", "-", "1.",
 		"> ", "#", "######", "#######", "\n\n\n", "\t", "\x00", "\xff\xfe",
 		"[a](", "*a", "`a", "```a", "- \n- \n", "> > > x", "***", "_ _ _",
+		// Ends without a newline, which real files often do, and shapes where
+		// a delimiter run is the last thing in the document.
+		"a `b`", "a **b**", "a ~~b~~", "~", "~~", "~~a", "~~a~~~", "~~~~",
+		"a ~~b ~~c~~ d~~", "![a](b)", "[a]: /b", "x\n=", "x\n-",
+		// Fences and containers that never close, where the block runs to the
+		// end of whatever holds it.
+		"```\nx", "~~~\nx", "> ```\nx", "- ```\n  x", "  ```\n  x",
+		"`` `x` ``", "|a|", "|a|\n|-|", "1)", "5. ", "- [ ]", "> \n> \n",
+		"    x\n\n    y", "%%c%%", "\r\n\r\n",
 	} {
 		for _, f := range []markdown.Flavor{markdown.CommonMark, markdown.Sherd} {
 			doc := markdown.Parse([]byte(src), markdown.Options{Flavor: f})

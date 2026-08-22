@@ -106,6 +106,12 @@ for spec in "${groups[@]}"; do
 	if [ "$tenths" -lt "$(( floor * 10 ))" ]; then
 		echo "  ^ below the QA-001 floor for $name" >&2
 		status=1
+	elif [ "$tenths" -lt "$(( floor * 10 + 5 ))" ]; then
+		# Half a point of margin is a handful of statements. Saying so here is
+		# how the drop gets noticed while it is still a warning, rather than as
+		# a red build on whichever commit happens to cross the line.
+		margin=$(( tenths - floor * 10 ))
+		printf '  ^ only %d.%d points above the floor\n' "$(( margin / 10 ))" "$(( margin % 10 ))"
 	fi
 done
 

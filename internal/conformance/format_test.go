@@ -165,7 +165,7 @@ func TestIncrementalReparseMatchesFullReparse(t *testing.T) {
 		}
 		doc := markdown.Parse(c.Source, opts)
 
-		for k := 0; k < 4; k++ {
+		for k := 0; k < 8; k++ {
 			e := randomEdit(rng, c.Source)
 			got, inc := doc.Reparse(e)
 			want := markdown.Parse(applyEdit(c.Source, e), opts)

@@ -98,6 +98,16 @@ func TestReparseTakesTheFastPathWhereItShould(t *testing.T) {
 			old: "one", new: "ONE", wantFast: false,
 			why: "a fence of one line has no closer, so it grows into whatever an edit leaves after it",
 		},
+		{
+			name: "typing a list marker between two lists", src: "- a\n\nmid\n\n- b\n",
+			old: "mid", new: "- mid", wantFast: false,
+			why: "a blank line does not separate two lists; they are one loose list, so the edited block joins its neighbours",
+		},
+		{
+			name: "editing a list that already has a list beside it", src: "- a\n\n- b\n\ntail\n",
+			old: "tail", new: "TAIL", wantFast: true,
+			why: "the edited block is not the list, so the loose-list merge cannot reach it",
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			doc := markdown.Parse([]byte(tc.src), markdown.Options{})
