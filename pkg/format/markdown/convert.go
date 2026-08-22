@@ -266,7 +266,12 @@ func (b *builder) relocate(parent, c *Node, lo, hi int) Range {
 		return Range{lo, lo}
 	}
 	if c.Literal != "" {
-		if i := strings.Index(string(b.src[lo:hi]), c.Literal); i >= 0 {
+		// Inline text never spans a line — goldmark's segments are per-line —
+		// so the search stops at the end of one. Searching further finds the
+		// same characters in another paragraph and drags the node across the
+		// document to sit beside them.
+		end := minInt(hi, b.lineEnd(lo))
+		if i := strings.Index(string(b.src[lo:end]), c.Literal); i >= 0 {
 			return Range{lo + i, lo + i + len(c.Literal)}
 		}
 	}

@@ -43,6 +43,27 @@ func (d *Document) Reparse(e Edit) (*Document, bool) {
 }
 
 // reparseBlock rebuilds one top-level block and shifts the rest.
+//
+// The fast path rests on one claim: that the edited block's bytes decide the
+// edited block's tree, and nothing else's. Two things can make that false, and
+// the guards below are their enumeration.
+//
+// The tree may not explain the file. A node placed by inference sits where its
+// neighbours leave room, and a slice leaves different room; an unreferenced
+// footnote definition produces no node at all, so nothing shows that a
+// reference added elsewhere will bring it to life. Both are caught by refusing
+// any document whose blocks do not account for its non-blank bytes, or whose
+// positions were guessed.
+//
+// Or a construct may reach across the blank line that is supposed to separate
+// blocks. In CommonMark and GFM that list is finite and it is checked here in
+// full: indented code continues through blank lines, two lists separated by
+// one are a single loose list, a list claims whatever follows it indented, an
+// unterminated fence is closed only by whatever ends the block holding it, an
+// HTML block behaves the same way, and a definition is visible to the whole
+// file. Every one of those was found by the fuzz target rather than reasoned
+// out in advance, which is the reason to trust the list rather than the
+// reasoning.
 func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 	if d.Root == nil {
 		return nil, false
@@ -58,7 +79,12 @@ func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 	// gaps around it. A slice has different gaps, so the same node lands
 	// somewhere else and the two answers diverge. Correctness of the fast path
 	// matters more than its reach.
-	if d.guessed || d.docScoped {
+	// And a tree that does not account for every non-blank byte of its file is
+	// hiding something: an unreferenced footnote definition produces no node
+	// at all, so nothing in the tree shows that adding a reference elsewhere
+	// will bring it to life. Reasoning locally about a document with a region
+	// like that is reasoning from an incomplete picture.
+	if d.guessed || d.docScoped || !accountsForItsSource(d) {
 		return nil, false
 	}
 
