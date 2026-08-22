@@ -14,7 +14,7 @@ the history of what we believed, and why, is the point.
 | [0004](0004-frontmatter-round-trip.md) | Frontmatter round-trip (`OD-004`) | Accepted |
 | [0005](0005-crdt-library.md) | CRDT library (`OD-005`) | Accepted |
 | [0006](0006-plugin-js-runtime.md) | Plugin JavaScript runtime (`OD-006`) | Accepted |
-| [0007](0007-project-name.md) | Project name and trademark (`OD-007`) | Accepted |
+| [0007](0007-project-name.md) | Project name and trademark (`OD-007`) | Accepted — **rename required before release** |
 
 ## Writing one
 
