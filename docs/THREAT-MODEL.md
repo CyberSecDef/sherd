@@ -198,6 +198,7 @@ requirement, recorded here rather than discovered late.
 | G4 | **No freshness guarantee against a lying server.** Nothing requires the client to detect deliberately withheld operations. | §5 | P5.1 |
 | G5 | **No shared-screen privacy affordance.** No blur, hide, or per-note lock. | §7 | P2 |
 | G6 | **Snapshot history is not covered by any confidentiality requirement.** `NFR-REL-003` stores compressed deltas of note content with no statement about their protection. | §6 | P1.11 |
+| G7 | **File permissions are not enforced on Windows.** `internal/obs` requests mode `0600` for the log file, and `ARC-003` requires `0600` for the daemon socket and TCP token. Go does not implement Unix permission bits on Windows: the mode is ignored and access is governed by the inherited NTFS ACL. In practice a file created under the per-user application data directory inherits a user-only ACL, so exposure is limited — but **that protection is incidental, not asserted**, and nothing tests it. `ARC-003`'s `0600` requirement is therefore unmet on a Tier-1 platform. Found by CI on `windows-latest`, not by review. | §6, §7 | P1.1 (socket), P1.12 (log) |
 
 ## 9. Explicitly out of scope
 

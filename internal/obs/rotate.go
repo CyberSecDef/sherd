@@ -27,7 +27,13 @@ type RotatingFile struct {
 }
 
 // NewRotatingFile opens (or creates) path. Log files are 0600: at DEBUG they
-// may contain vault paths, so they are not world-readable.
+// may contain vault paths, so they must not be readable by other users.
+//
+// On Windows the mode is not honoured — Go does not implement Unix permission
+// bits there, and access is governed by the ACL inherited from the parent
+// directory instead. Placing the log under the per-user application data
+// directory is therefore load-bearing on that platform, not merely tidy.
+// See docs/THREAT-MODEL.md gap G7.
 func NewRotatingFile(path string, maxBytes int64, maxFiles int) (*RotatingFile, error) {
 	if maxBytes <= 0 {
 		return nil, fmt.Errorf("maxBytes must be positive, got %d", maxBytes)

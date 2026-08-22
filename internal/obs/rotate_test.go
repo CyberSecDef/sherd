@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -149,7 +150,17 @@ func TestConcurrentWritesDoNotInterleave(t *testing.T) {
 }
 
 func TestLogFileIsNotWorldReadable(t *testing.T) {
-	// At DEBUG the file may contain vault paths.
+	// At DEBUG the file may contain vault paths, so the log must not be
+	// readable by other users.
+	//
+	// Windows is skipped because Go's os package does not implement Unix
+	// permission bits there — it reports 0666 whatever mode is requested, and
+	// the real access control is the NTFS ACL inherited from the parent
+	// directory. That is a genuine gap rather than a test artifact; see
+	// docs/THREAT-MODEL.md gap G7.
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix permission bits are not implemented on Windows; see THREAT-MODEL.md G7")
+	}
 	dir := t.TempDir()
 	path := filepath.Join(dir, "sherd.log")
 	w, err := NewRotatingFile(path, 1024, 2)
