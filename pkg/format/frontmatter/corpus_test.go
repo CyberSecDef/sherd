@@ -5,6 +5,7 @@ package frontmatter_test
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
@@ -141,5 +142,32 @@ func TestFixtureIdentifiers(t *testing.T) {
 		if name := id(path); !strings.HasPrefix(name, "read/") || strings.HasSuffix(name, ".md") {
 			t.Errorf("%s has identifier %q", path, name)
 		}
+	}
+}
+
+// TestTheCorpusKeepsItsLineEndings. roundtrip/crlf.md is the only fixture whose
+// point is the bytes at the end of its lines, which makes it the only one a
+// checkout can quietly ruin: normalising it to LF leaves a file that still
+// parses, still passes every other test, and no longer tests anything.
+//
+// It happened the moment the corpus landed — .gitattributes normalised all of
+// testdata to LF for the conformance corpus's sake, which is right for that one
+// and wrong for this one. The rule is now scoped, and this is the test that
+// says so out loud rather than trusting a line in a config file.
+func TestTheCorpusKeepsItsLineEndings(t *testing.T) {
+	src := read(t, filepath.Join(corpusRoot, "roundtrip/crlf.md"))
+	if !bytes.Contains(src, []byte("\r\n")) {
+		t.Fatal("roundtrip/crlf.md has no CRLF in it — a checkout normalised the fixture away; see .gitattributes")
+	}
+
+	d := frontmatter.Parse(src)
+	if !d.Has() {
+		t.Fatal("no frontmatter found in a CRLF file")
+	}
+	if p, ok := d.Get("title"); !ok || p.Value != "Hello" {
+		t.Errorf("title = %#v ok=%v — the value picked up a carriage return", p.Value, ok)
+	}
+	if body := d.Text(d.Body); !bytes.Contains(body, []byte("\r\n")) {
+		t.Errorf("body = %q, want its CRLF endings left alone", body)
 	}
 }

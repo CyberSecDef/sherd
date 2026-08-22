@@ -12,3 +12,11 @@
 # there (FR-VLT-015).
 testdata/**            text eol=lf
 **/testdata/**         text eol=lf
+
+# The frontmatter corpus is the exception, and it has to be. Preserving a file's
+# own line endings is the requirement under test there (FR-VLT-017, FR-MD-033),
+# and roundtrip/crlf.md exists to prove Sherd does. Normalizing it to LF deletes
+# the fixture's reason to exist while leaving it looking fine — which is what
+# happened the moment the corpus landed, caught by the test that asserts the
+# fixture's own bytes. These files are committed exactly as they are.
+testdata/frontmatter/** -text
