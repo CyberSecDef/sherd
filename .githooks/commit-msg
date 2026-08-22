@@ -1,0 +1,28 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 The Granite Authors
+#
+# Reject any commit without a Developer Certificate of Origin sign-off (LEG-007).
+# Install with: make hooks
+
+msg_file="$1"
+
+# Ignore comment lines when looking for the trailer.
+if grep -qE '^[[:space:]]*Signed-off-by: .+ <.+@.+>' "$msg_file"; then
+	exit 0
+fi
+
+cat >&2 <<'MSG'
+✗ Commit rejected: missing Signed-off-by trailer.
+
+Granite requires a Developer Certificate of Origin sign-off on every commit
+(LEG-007, see CONTRIBUTING.md §2). Commit with -s:
+
+    git commit -s
+
+To fix the commit you just attempted, re-run your command with -s. To fix an
+existing commit:
+
+    git commit --amend -s --no-edit
+MSG
+exit 1

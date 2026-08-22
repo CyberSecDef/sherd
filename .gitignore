@@ -1,0 +1,17 @@
+# Build artifacts
+/dist/
+/cmd/granite/granite
+/cmd/granited/granited
+/cmd/granite-tui/granite-tui
+*.exe
+
+# Test and profiling output
+*.test
+*.out
+/coverage.*
+
+# Editor and OS noise
+.DS_Store
+*.swp
+.idea/
+.vscode/

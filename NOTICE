@@ -1,0 +1,45 @@
+Granite
+Copyright (C) 2026 The Granite Authors
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+this program. If not, see <https://www.gnu.org/licenses/>.
+
+The full license text is in the LICENSE file at the root of this repository.
+
+--------------------------------------------------------------------------------
+Third-party components
+--------------------------------------------------------------------------------
+
+Granite links third-party libraries, each under its own license. Every such
+license is GPL-3.0-compatible; see LEG-005 in REQUIREMENT_SPEC.md. A generated
+inventory of those components and their licenses is in THIRD-PARTY-LICENSES.md,
+which ships in every release artifact (LEG-006).
+
+--------------------------------------------------------------------------------
+Documents
+--------------------------------------------------------------------------------
+
+CODE_OF_CONDUCT.md is adapted from the Contributor Covenant v2.1
+(https://www.contributor-covenant.org), used under CC BY 4.0.
+
+--------------------------------------------------------------------------------
+Provenance
+--------------------------------------------------------------------------------
+
+Granite is a clean-room implementation. It is written from a functional
+specification derived from publicly documented behavior, published file-format
+documentation, and externally observable application behavior. It contains no
+decompiled code, no copied source, and no copied assets from any proprietary
+product. See section 0 of REQUIREMENT_SPEC.md.
+
+"Granite" is a working codename. It is not a claim to any trademark, and it
+must clear a trademark search before any public release (LEG-003, OD-007).
