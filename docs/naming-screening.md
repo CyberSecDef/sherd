@@ -25,6 +25,7 @@ than repeated from scratch.
 | `notemesh` | **Rejected** | A defunct startup of the same name in knowledge management; 11 same-named note apps; domain held since 2006 |
 | `notehive` | **Rejected** | Live note-taking products on the App Store, Google Play, `notehive.net` and `notehive.app` |
 | `noteforge` | **Rejected** | Live products on Google Play and `noteforge.dev`, the latter a dev note-linking tool |
+| `jama` | **Rejected** | Jama Software's registered `JAMA CONNECT` mark covers downloadable document-management software; plus the AMA's JAMA journal |
 
 ## Screening detail
 
@@ -210,6 +211,42 @@ Roam, Logseq, Zettlr, Joplin, Bear, Craft. **None of them is `Note`+X.** That is
 not a coincidence: arbitrary and suggestive marks are both legally stronger and
 practically findable. Abandoning the `Note*` family entirely is a better use of
 effort than screening more of it.
+
+### `jama` — rejected
+
+Proposed as a recursive acronym, *Just Another Markdown Aggregator*, in the GNU
+tradition. The device is sound; these four letters are not available.
+
+- **Jama Software, Inc.** holds the registered mark **`JAMA CONNECT`**
+  (Reg. 5849811, Serial 88286498, filed February 2019). Its goods include
+  *"downloadable software for product development … configuration management,
+  change management … and **document management**"*. That is a registered mark,
+  held by a software company whose trading name is Jama, covering downloadable
+  document-management software. There is no daylight between that and what
+  Granite is.
+- **JAMA** is also the Journal of the American Medical Association — one of the
+  most cited journals in the world, with an entire JAMA Network of titles behind
+  it. A famous mark in a different field is still a famous mark.
+- npm `jama` is taken — *"JavaScript port of JAMA, the Java Matrix Library"* —
+  which is a **third** established technical JAMA (the NIST Java matrix
+  package). A fourth is the Japan Automobile Manufacturers Association.
+- `jama.dev` (registered 2025-08-07) and `jama.app` (2022-04-04) are held.
+  GitHub returns 10,709 repositories matching the term.
+
+Four-letter acronyms are the densest namespace in existence, and this one is
+already carrying at least four established meanings, one of them a registered
+software mark in our own goods.
+
+**Separately, the expansion mis-describes the product.** Granite is not an
+aggregator. Per §1.1 it is an editor with linking, indexing, structured query,
+graph, canvas, views, plugins, sync, and export. "Aggregator" suggests a feed
+reader, which sets the wrong expectation before anyone opens it.
+
+**The device is still worth keeping.** Recursive acronyms have excellent
+precedent in exactly this project's tradition — GNU, YAML, PHP, WINE, LAME —
+and suit a GPL tool with an opinionated posture. The requirement is only that
+the resulting letters be an uncrowded string and the expansion describe what the
+thing actually does.
 
 ## Not yet screened
 
