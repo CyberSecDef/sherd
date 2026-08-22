@@ -80,6 +80,10 @@ analytics: ## Fail if any analytics or telemetry package is linked in (NFR-SEC-0
 vault-writes: ## Fail on direct filesystem writes outside internal/vault (ARC-MOD-003)
 	@./scripts/check-vault-writes.sh
 
+.PHONY: cover
+cover: ## Fail if coverage is below the QA-001 floors
+	@./scripts/check-coverage.sh
+
 .PHONY: conformance
 conformance: ## Run the golden-file Markdown corpus (QA-002)
 	$(GO) test ./internal/conformance/... -v
@@ -94,6 +98,7 @@ self-test: ## Prove the CI guards actually fire (see testdata/ci/)
 	@./scripts/check-analytics.sh --self-test
 	@./scripts/check-vault-writes.sh --self-test
 	@./scripts/gen-third-party-licenses.sh --self-test
+	@./scripts/check-coverage.sh --self-test
 
 .PHONY: spdx-check
 spdx-check: ## Fail if any Go file lacks the SPDX header
@@ -102,7 +107,7 @@ spdx-check: ## Fail if any Go file lacks the SPDX header
 	if [ -n "$$missing" ]; then echo "missing SPDX header:"; echo "$$missing"; exit 1; fi
 
 .PHONY: check
-check: build test fmt-check vet lint sec vuln licenses-check spdx-check arch analytics vault-writes self-test ## Run every gate a pull request must pass
+check: build test cover fmt-check vet lint sec vuln licenses-check spdx-check arch analytics vault-writes self-test ## Run every gate a pull request must pass
 	@echo "all checks passed"
 
 .PHONY: clean

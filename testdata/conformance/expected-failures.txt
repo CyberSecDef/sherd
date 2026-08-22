@@ -9,6 +9,8 @@
 # So the file can only shrink, and progress cannot be silently lost. During P0
 # it shrinks commit by commit, and its diff is the progress report.
 #
-# It is empty because no parser is registered yet; every case is pending for
-# that reason, which the harness reports once rather than listing 667 times.
-# P0.1 populates it, then empties it.
+# It is empty because nothing is failing. pkg/format is registered and every
+# case the parser can answer passes; the cases it cannot answer yet — the ones
+# asserting metadata, which P0.2 and P0.3 bring — are reported as skipped, and
+# a skip is never counted as a pass. So an entry here means a real failure that
+# somebody has accepted for now, and the file should stay empty until one is.

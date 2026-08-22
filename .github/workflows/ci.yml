@@ -86,6 +86,10 @@ jobs:
         if: ${{ !cancelled() }}
         run: make licenses-check
 
+      - name: Coverage floors (QA-001)
+        if: ${{ !cancelled() }}
+        run: make cover
+
       - name: Guards actually fire against known-bad fixtures
         if: ${{ !cancelled() }}
         run: make self-test
