@@ -11,6 +11,10 @@
 version: 3
 workdir: .
 
+# Spike code is a separate module and never ships (see spikes/README.md).
+exclude:
+  - spikes
+
 allow:
   depOnAnyVendor: false
 

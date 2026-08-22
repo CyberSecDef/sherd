@@ -1,0 +1,5 @@
+---
+description: |-
+  strips trailing
+---
+body

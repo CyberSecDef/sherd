@@ -70,10 +70,11 @@ if [[ "${1:-}" == "--self-test" ]]; then
 fi
 
 # Everything except internal/vault (which owns writes), tests (which write to
-# t.TempDir, outside any vault), and this repository's own tooling.
+# t.TempDir, outside any vault), and spikes/ (a separate module that never ships).
 files="$(find . -name '*.go' \
 	-not -path './.git/*' \
 	-not -path './internal/vault/*' \
+	-not -path './spikes/*' \
 	-not -name '*_test.go' \
 	| LC_ALL=C sort)"
 
