@@ -4,7 +4,7 @@ A local-first, plain-text personal knowledge management application.
 
 > **Status: pre-implementation.** There is no working software here yet. The
 > repository currently holds the specification, the implementation plan, and the
-> project skeleton. Phase P-1 is in progress. Do not expect a usable program
+> project skeleton. Phase B (bootstrap) is complete; P0 is next. Do not expect a usable program
 > until phase P1.
 
 ## What it is meant to be
@@ -37,7 +37,7 @@ These resolve every ambiguity in the specification, in this order:
 | Path | What it is |
 |---|---|
 | [`REQUIREMENT_SPEC.md`](REQUIREMENT_SPEC.md) | The contract. 350 numbered requirements, RFC 2119 normative. |
-| [`PLAN.md`](PLAN.md) | The route. Phases P-1 → P7, 60 steps, with a traceability matrix covering every requirement. |
+| [`PLAN.md`](PLAN.md) | The route. Phase B, then P0 → P7, 60 steps, with a traceability matrix covering every requirement. |
 | [`CLAUDE.md`](CLAUDE.md) | Working agreement for anyone — human or agent — writing code here. |
 | `cmd/` | Binaries: `sherd` (CLI + launcher), `sherdd` (daemon), `sherd-tui`. |
 | `internal/` | Implementation packages. |

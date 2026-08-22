@@ -4,7 +4,7 @@
 // Command od002-sqlite benchmarks the two candidate SQLite drivers against a
 // reference-scale vault (OD-002).
 //
-// The decision rule from PLAN.md P-1.3: prefer the pure-Go driver unless the
+// The decision rule from PLAN.md B.3: prefer the pure-Go driver unless the
 // CGO driver is more than 2x faster, because NFR-PLAT-002 wants the core to
 // build without CGO.
 //

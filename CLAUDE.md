@@ -9,7 +9,7 @@ Sherd is a clean-room, open-source, local-first PKM application in **Go 1.23+**,
 | File | Role |
 |---|---|
 | `REQUIREMENT_SPEC.md` | The contract. 350 numbered requirements (`LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*`). RFC 2119 keywords are normative. |
-| `PLAN.md` | The route. Phases `P-1`…`P7` plus continuous tracks `X.1`…`X.5`, 60 steps, each with *Delivers / Covers / Done when*. §16 maps every spec ID to its step. |
+| `PLAN.md` | The route. Phases `B`, then `P0`…`P7` plus continuous tracks `X.1`…`X.5`, 60 steps, each with *Delivers / Covers / Done when*. §16 maps every spec ID to its step. |
 
 **Authority order when documents disagree:** `REQUIREMENT_SPEC.md` → `PLAN.md` → this file → your judgment. Where the spec is ambiguous, resolve against its §1.3 design principles, in their stated order.
 

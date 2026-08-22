@@ -10,6 +10,6 @@ import (
 )
 
 func main() {
-	fmt.Fprintln(os.Stderr, "sherd-tui: not implemented (phase P-1 scaffold)")
+	fmt.Fprintln(os.Stderr, "sherd-tui: not implemented (phase B scaffold)")
 	os.Exit(1)
 }

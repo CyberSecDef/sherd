@@ -1048,7 +1048,7 @@ At that point you have a useful tool with zero UI, and every subsequent layer is
 |---|---|---|
 | Amended | §4.3 module layout | Added `internal/obs/`. `FR-OBS-001`…`FR-OBS-005` mandate structured logging, `doctor` checks, a diagnostics panel, `pprof`, and crash reports, and the layout gave none of them a home. Recorded here rather than letting the tree drift from the code. |
 
-Implemented in P-1.5: `internal/obs` provides `log/slog` with level-aware
+Implemented in B.5: `internal/obs` provides `log/slog` with level-aware
 redaction and a hand-rolled rotating file sink. Rotation was written in-repo
 rather than taken from a dependency, keeping the core at zero third-party
 modules; see that phase's commit for the trade-off.
@@ -1071,7 +1071,7 @@ public release.
 
 ### v1.1 — 2026-08-21
 
-Amendments arising from the phase P-1.3 decision spikes. Each is traceable to
+Amendments arising from the phase B.3 decision spikes. Each is traceable to
 measured evidence in `spikes/` and to an ADR in `docs/adr/`.
 
 | Change | Requirement | Reason |

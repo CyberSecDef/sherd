@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-// TestNoSecretsReachTheLogFile is P-1.5's exit criterion, asserted end to end:
+// TestNoSecretsReachTheLogFile is B.5's exit criterion, asserted end to end:
 // a real logger, writing to a real file on disk, must contain no note content
 // and no file paths at INFO and above (FR-OBS-001).
 //

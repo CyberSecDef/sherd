@@ -6,8 +6,8 @@ from:
 
 | Document | Phase | Requirement |
 |---|---|---|
-| `adr/` — architecture decision records | P-1.3 onward | `OD-001` … `OD-007` |
-| `THREAT-MODEL.md` | P-1.5 | `NFR-SEC-007` |
+| `adr/` — architecture decision records | B.3 onward | `OD-001` … `OD-007` |
+| `THREAT-MODEL.md` | B.5 | `NFR-SEC-007` |
 | `formats/canvas.md` | P2.2 | `FR-CNV-011` |
 | `formats/base.md` | P4.1 | `FR-BASE-001` |
 | `PLUGIN-API-PROVENANCE.md` | P3.3 | `LEG-008` |

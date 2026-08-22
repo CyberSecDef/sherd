@@ -72,6 +72,6 @@ meaningful at v1.0. Until then, fixes land on `main`.
 ## Threat model
 
 The full threat model will be published at `docs/THREAT-MODEL.md` during
-phase P-1.5 (`NFR-SEC-007`). It covers malicious note content, a malicious
+phase B.5 (`NFR-SEC-007`). It covers malicious note content, a malicious
 plugin, a malicious sync server, a compromised local account, and
 shoulder-surfing on shared vaults.

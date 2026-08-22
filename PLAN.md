@@ -1,15 +1,22 @@
 # Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.4)
-**Plan version:** 1.4
+**Plan version:** 1.5
 **Status:** Ready for execution
-**Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §12 for the traceability matrix. Updated for spec v1.1 (`NFR-PERF-011`, `FR-SRCH-014`, `FR-SRCH-015`).
+**Phase numbering:** `P0`…`P7` deliberately mirror the phase table in
+`REQUIREMENT_SPEC.md` §25 and must not be renumbered. **Phase B** is the extra
+bootstrap phase this plan adds ahead of `P0`; it is lettered rather than
+numbered because `P-1` and `P1` differ by a single hyphen and were being misread.
+Section references written `spec §N` point at the specification; a bare `§N`
+points at this document.
+
+**Scope:** Every requirement ID in the spec — `LEG-*`, `NFR-*`, `ARC-*`, `FR-*`, `QA-*`, `OD-*` — is assigned to exactly one phase step. See §16 for the traceability matrix. Updated for spec v1.1 (`NFR-PERF-011`, `FR-SRCH-014`, `FR-SRCH-015`).
 
 ---
 
 ## 1. How to use this document
 
-- Work is organized into **phases** (`P-1` … `P7`), each phase into **steps** (`P0.3`, `P4.2`, …), each step into concrete tasks.
+- Work is organized into **phases** (`B` … `P7`), each phase into **steps** (`P0.3`, `P4.2`, …), each step into concrete tasks.
 - Every step lists: **Delivers** (artifacts), **Covers** (requirement IDs), **Done when** (verifiable exit test).
 - **A step is not complete until its tests exist and pass in CI.** `QA-012` applies from day one: no fix lands without a failing-first regression test.
 - Phases are mostly sequential; §3 marks what can run in parallel. Steps inside a phase are ordered by dependency unless noted `‖` (parallelizable).
@@ -46,27 +53,27 @@
 ## 3. Phase map
 
 ```
-P-1  Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Structure ──> P3 Extensibility ──> P4 Views
+B    Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Structure ──> P3 Extensibility ──> P4 Views
                 │                  │                                          │
                 │                  └─> P5 Sync (starts after P0, lands after P3)
                 │                                                             │
                 └─> X  Cross-cutting tracks (continuous)                      └─> P6 Publish & reach ──> P7 Mobile
 ```
 
-| Phase | Title | Est. | Gate to next phase |
-|---|---|---|---|
-| **P-1** | Bootstrap & decisions | 3–4 w | All `OD-*` spikes resolved and recorded as ADRs |
-| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | `sherd search` on a 20k-note vault; conformance corpus green |
-| **P1** | Core app (daemon, IPC, webview, editor) | 16–20 w | Daily-driver for one user, one device |
-| **P2** | Structure (graph, canvas, modules, replace) | 12–16 w | Parity with the reference product's core module set |
-| **P3** | Extensibility (plugins, themes, settings UI) | 10–14 w | Third party ships a plugin from published docs alone |
-| **P4** | Views (Bases) | 8–12 w | 20k-row view renders within budget |
-| **P5** | Sync (protocol, server, E2EE, conflicts) | 16–22 w | `QA-006` passes, 10k randomized runs, zero lost ops |
-| **P6** | Publish & reach (export, clipper, importers, TUI, MCP) | 12–16 w | Site published from a vault via CI |
-| **P7** | Mobile | — | Out of v1 scope; constraints enforced from P0 |
-| **X** | Cross-cutting tracks | continuous | Gates ride along with every phase |
+| Phase | Title | Est. | Status | Gate to next phase |
+|---|---|---|---|---|
+| **B** | Bootstrap & decisions | 3–4 w | ✅ **Complete** | All `OD-*` spikes resolved and recorded as ADRs |
+| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | ⬜ Not started | `sherd search` on a 20k-note vault; conformance corpus green |
+| **P1** | Core app (daemon, IPC, webview, editor) | 16–20 w | ⬜ Not started | Daily-driver for one user, one device |
+| **P2** | Structure (graph, canvas, modules, replace) | 12–16 w | ⬜ Not started | Parity with the reference product's core module set |
+| **P3** | Extensibility (plugins, themes, settings UI) | 10–14 w | ⬜ Not started | Third party ships a plugin from published docs alone |
+| **P4** | Views (Bases) | 8–12 w | ⬜ Not started | 20k-row view renders within budget |
+| **P5** | Sync (protocol, server, E2EE, conflicts) | 16–22 w | ⬜ Not started | `QA-006` passes, 10k randomized runs, zero lost ops |
+| **P6** | Publish & reach (export, clipper, importers, TUI, MCP) | 12–16 w | ⬜ Not started | Site published from a vault via CI |
+| **P7** | Mobile | — | ⬜ Deferred | Out of v1 scope; constraints enforced from P0 |
+| **X** | Cross-cutting tracks | continuous | 🔄 Ongoing | Gates ride along with every phase |
 
-**Parallelism:** P5 crypto/protocol design (`P5.1`–`P5.3`) may start once `P0` lands and runs alongside P2–P4 with a separate owner. P6 importers (`P6.4`) are independent of everything after P0 and are good parallel/community work. Track X runs continuously from P-1.
+**Parallelism:** P5 crypto/protocol design (`P5.1`–`P5.3`) may start once `P0` lands and runs alongside P2–P4 with a separate owner. P6 importers (`P6.4`) are independent of everything after P0 and are good parallel/community work. Track X runs continuously from B.
 
 ---
 
@@ -75,7 +82,7 @@ P-1  Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Struct
 These have no end date. Each has a named owner and a CI gate that tightens over time.
 
 ### X.1 Quality gates
-- **X.1.1** CI matrix across all Tier-1 targets from P-1 (`NFR-PLAT-001`, `QA-009`).
+- **X.1.1** CI matrix across all Tier-1 targets from B (`NFR-PLAT-001`, `QA-009`).
 - **X.1.2** Coverage thresholds enforced per-package, raised to spec levels by end of the phase that owns the package (`QA-001`).
 - **X.1.3** Fuzz corpus: add a target the same day a parser lands; run continuously; submit to OSS-Fuzz after P0 (`QA-004`).
 - **X.1.4** Property tests for every round-trip pair (`QA-003`).
@@ -86,7 +93,7 @@ These have no end date. Each has a named owner and a CI gate that tightens over 
 - **X.1.9** Static analysis and license/vuln jobs (`QA-011`, `NFR-SEC-009`, `LEG-005`).
 
 ### X.2 Security & privacy
-- **X.2.1** `docs/THREAT-MODEL.md` seeded in P-1, revisited at every phase gate (`NFR-SEC-007`).
+- **X.2.1** `docs/THREAT-MODEL.md` seeded in B, revisited at every phase gate (`NFR-SEC-007`).
 - **X.2.2** Analytics-import denylist and egress assertion tests (`NFR-SEC-001`, `NFR-SEC-002`).
 - **X.2.3** Supply chain: pinned `go.sum`, SBOM (CycloneDX) per release, cosign signatures (`NFR-SEC-009`).
 - **X.2.4** All crypto from `crypto/*` / `x/crypto`; a review checklist rejects hand-rolled primitives (`NFR-SEC-008`).
@@ -110,12 +117,33 @@ These have no end date. Each has a named owner and a CI gate that tightens over 
 
 ---
 
-## 5. Phase P-1 — Bootstrap & decisions
+## 5. Phase B — Bootstrap & decisions ✅ COMPLETE
 
 **Goal:** A repository that cannot accumulate legal, license, or architectural debt, and every open decision closed before code depends on it.
-**Est.** 3–4 weeks.
+**Est.** 3–4 weeks. **Completed 2026-08-21.**
 
-### P-1.1 Repository and legal skeleton
+| Step | Status | Delivered by |
+|---|---|---|
+| B.1 Repository and legal skeleton | ✅ | `71738a1` |
+| B.2 CI from day one | ✅ | `d9d9af7`, `b5b95b3`, `6ee91bf` |
+| B.3 Decision spikes | ✅ | `44e56eb`, `9e240de`, `738c48b`, `a7f70e4`, `d091b30`, `29e6df1`, `fa238a9` |
+| B.4 Seed the conformance corpus | ✅ | `4cec7ad` |
+| B.5 Threat model and observability skeleton | ✅ | `67cb343`, `e158f65` |
+
+**What this phase changed downstream** — findings that altered later steps:
+
+- ADR 0002 found `NFR-PERF-010`'s index budget unachievable alongside phrase
+  search; the spec was amended to v1.1 and P0.7/P0.9 gained work.
+- ADR 0005 froze a rune-addressed buffer while `FR-MD-003` wants byte offsets
+  in the AST; P1.5 must bridge them inside a 16 ms budget.
+- ADR 0007/0008 renamed the project from `granite` to **Sherd**.
+- B.4 corrected its own exit criterion: `go test ./testdata/…` is impossible
+  because the Go tool ignores `testdata` directories.
+- B.5's threat model recorded seven gaps where a threat has no requirement; see
+  `docs/THREAT-MODEL.md` §8. `G7` (file permissions unenforced on Windows)
+  affects `ARC-003` and lands in P1.1 and P1.12.
+
+### B.1 Repository and legal skeleton ✅
 - `go mod init`, scaffold the full spec §4.3 tree with placeholder packages and `doc.go` per package.
 - `LICENSE` (GPL-3.0-or-later), `NOTICE`, generated `THIRD-PARTY-LICENSES.md`, `CONTRIBUTING.md` with DCO instructions and the clean-room attestation, `CODE_OF_CONDUCT.md`, `SECURITY.md`.
 - PR template with the clean-room checklist; commit hook rejecting unsigned-off commits.
@@ -123,14 +151,14 @@ These have no end date. Each has a named owner and a CI gate that tightens over 
 - **Covers:** `LEG-001`, `LEG-002`, `LEG-003`, `LEG-004`, `LEG-006`, `LEG-007`.
 - **Done when:** a PR without `Signed-off-by` fails CI; `THIRD-PARTY-LICENSES.md` regenerates deterministically.
 
-### P-1.2 CI from day one
+### B.2 CI from day one ✅
 - Jobs: build matrix (Linux x86_64/arm64 glibc+musl, macOS arm64/x86_64, Windows x86_64/arm64), `gofumpt`, `staticcheck`, `gosec`, `govulncheck`, `go-licenses` (allowlist), `go-arch-lint`, analytics-import denylist, mobile compile-only job.
 - Reproducible-build settings; CGO off by default with a build tag for any CGO path.
 - **Delivers:** `.github/workflows/*`, `arch-lint.yml`, license allowlist.
 - **Covers:** `NFR-PLAT-001`, `NFR-PLAT-002`, `LEG-005`, `NFR-SEC-001`, `NFR-SEC-009`, `QA-011`, `ARC-MOD-002`, `FR-MOB-001`, `X.1.*`.
 - **Done when:** a deliberately-added GPL-incompatible dep and a deliberately-added analytics import both fail the build.
 
-### P-1.3 Decision spikes (timeboxed, each ends in an ADR)
+### B.3 Decision spikes (timeboxed, each ends in an ADR) ✅
 Run these in parallel; none may slip past its box.
 
 | Spike | Box | Output |
@@ -147,7 +175,7 @@ Run these in parallel; none may slip past its box.
 - **Covers:** `OD-001`…`OD-007`, `ARC-UI-001`.
 - **Done when:** every ADR is merged with a decision, rationale, and a documented reversal cost.
 
-### P-1.4 Seed the conformance corpus
+### B.4 Seed the conformance corpus ✅
 - Stand up `testdata/conformance/` structure: input `.md`, expected AST JSON, expected metadata JSON, expected HTML.
 - Import the CommonMark 0.31.2 suite as the base layer; add a harness that runs all four comparisons.
 - **Delivers:** corpus harness, CommonMark suite vendored, expected-failure ratchet.
@@ -155,14 +183,16 @@ Run these in parallel; none may slip past its box.
 - **Done when:** `go test ./internal/conformance/...` runs and reports per-case diffs legibly.
 - *Corrected in v1.3: the exit criterion originally said `go test ./testdata/conformance/...`, which cannot work — the Go tool ignores any directory named `testdata`, so no test can live inside one. The corpus stays at `testdata/conformance/` per spec §4.3; the harness lives in `internal/conformance/`.*
 
-### P-1.5 Threat model and observability skeleton
+### B.5 Threat model and observability skeleton ✅
 - `docs/THREAT-MODEL.md` first draft: malicious note content, malicious plugin, malicious sync server, compromised local account, shoulder-surfing on shared vaults.
 - `log/slog` setup with rotating local file sink and the content/path redaction rule.
 - **Covers:** `NFR-SEC-007`, `FR-OBS-001`.
 - **Done when:** logs at INFO and above contain no note content or file paths, asserted by a test.
 - *Delivered in `internal/obs` (spec §4.3 amended in v1.4 to add the package). Rotation hand-rolled rather than taken from a dependency, keeping the core at zero third-party modules. The threat model identified six specification gaps — see `docs/THREAT-MODEL.md` §8 — which are candidate requirements, not yet adopted.*
 
-**Phase gate P-1:** all ADRs merged; CI red on every deliberate violation; corpus harness runs.
+**Phase gate B: ✅ passed.** All eight ADRs merged; CI fails on every deliberate
+violation (proven live in PR #1); the conformance harness runs over 667 cases;
+the redaction rule is asserted end to end against a real log file.
 
 ---
 
@@ -171,7 +201,7 @@ Run these in parallel; none may slip past its box.
 **Goal:** A useful tool with zero UI. Everything after this is additive.
 **Est.** 14–18 weeks. This is the phase where quality is cheapest to buy and most expensive to skip.
 
-### P0.1 `pkg/format` — Markdown core and AST
+### P0.1 `pkg/format` — Markdown core and AST  ⬅️ **next**
 - goldmark-based CommonMark 0.31.2 core; GFM extensions (tables, strikethrough, task lists, autolinks, footnotes).
 - AST nodes carry byte-offset ranges into source — **design this in from the first commit**, it is not retrofittable.
 - Block-level incremental reparse: a change inside one block reparses that block and its containing structure only.
@@ -287,7 +317,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 
 ### P0.11 Performance harness and reference vault generator
 - Deterministic generator producing the spec §3.1 reference vault (20,000 notes, 250 MB, mean 4 KB, p99 400 KB) plus pathological variants (5 MB note, 100k files, 300-char names, CJK corpus).
-- Benchmarks wired to the CI gate for every §3.1 budget measurable without a UI.
+- Benchmarks wired to the CI gate for every spec §3.1 budget measurable without a UI.
 - **Covers:** `QA-008`, `NFR-PERF-002`, `NFR-PERF-003`, `NFR-PERF-005`, `NFR-PERF-010`, `QA-007`.
 - **Done when:** CI fails on a synthetic 15% regression.
 
@@ -449,7 +479,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - Global graph (notes, optionally attachments/tags/unresolved) and local graph (1–5 hops, in/out/both).
 - Force-directed layout with tunable center/repel/link forces and link distance; deterministic seeding for reproducibility.
 - Layout off the render thread (goroutine → batched position updates), Barnes-Hut O(n log n).
-- Filters using the full §9 DSL; show/hide attachments, tags, unresolved, orphans.
+- Filters using the full spec §9 DSL; show/hide attachments, tags, unresolved, orphans.
 - Color groups: named query → color, ordered, first match wins, editable order.
 - Display controls: node size by in/out-degree or file size, link thickness, text fade threshold, arrows, animation.
 - Interaction: pan, zoom, drag-to-pin, click-to-open, hover preview, hover neighborhood highlight, box-select.
@@ -587,7 +617,7 @@ Implement as goldmark extensions, each with corpus cases added the same commit.
 - **Done when:** the reference `.base` from spec §10.1 loads, saves, and round-trips byte-identically.
 
 ### P4.2 Filter and query integration
-- Filters compose the §9 query language plus property predicates with `and`/`or`/`not` nesting.
+- Filters compose the spec §9 query language plus property predicates with `and`/`or`/`not` nesting.
 - Index-backed predicate evaluation rather than scanning wherever the planner can push down.
 - **Covers:** `FR-BASE-003`, `FR-BASE-011` (planner half).
 - **Done when:** a filter over 20,000 notes executes as SQL, verified by an explain-plan assertion in the test.
@@ -807,17 +837,17 @@ Each importer is independent — good parallel and community work. Each **must p
 | R1 | Frontmatter round-trip is not byte-exact | Top user complaint in this category; erodes trust permanently | Hard gate: P0 cannot proceed past P0.2 until 200 fixtures are byte-exact | P0.2, `OD-004` |
 | R2 | Extended syntax leaks into code/math contexts | The spec's flagged top bug class | Dedicated exhaustive suite: every extension × every code context | P0.3 |
 | R3 | Byte ranges not designed into the AST from commit one | Live preview, surgical edits, and incremental parse all become rewrites | Enforce range invariants in P0.1 tests before any extension lands | P0.1 |
-| R4 | Editor buffer frozen before the CRDT decision | Real-time co-editing becomes a rewrite, not a feature | `OD-005` ADR must land before P1.5; buffer abstraction is the first P1.5 commit | P-1.3, P1.5 |
+| R4 | Editor buffer frozen before the CRDT decision | Real-time co-editing becomes a rewrite, not a feature | `OD-005` ADR must land before P1.5; buffer abstraction is the first P1.5 commit | B.3, P1.5 |
 | R5 | CJK tokenization intractable in FTS5 | Search unusable for a large user population | Validate against a real JA/ZH corpus in P0.7; documented fallback to Bleve (`OD-003`) | P0.7 |
 | R6 | Silent data loss in sync | Fatal to the project's core promise | `QA-006` invariant, 10k randomized runs, sibling-file materialization as the last line of defense | P5.5, P5.7 |
 | R7 | Crypto implemented without external review | Unfixable reputational damage | Hard gate: `docs/CRYPTO.md` reviewed by a non-implementer before v1.0 | P5.2 |
 | R8 | Business logic creeps into the frontend | Kills the TUI, the CLI, and mobile in one move | The TUI client (P6.6) is the standing enforcement test; review rule from P1.4 | P1.4, P6.6 |
 | R9 | A plugin can hang or crash the host | Undermines the whole extensibility story | Fuel limits, deadlines, memory caps, adversarial plugin suite | P3.1 |
 | R10 | Performance budgets regress gradually | Death by a thousand cuts; unrecoverable late | CI perf gate from P0.11 with a 10% failure threshold | P0.11, X.1.6 |
-| R11 | A GPL-incompatible or analytics dependency slips in | Legal exposure; violates a stated principle | CI denylist and license allowlist from P-1.2, tested with deliberate violations | P-1.2 |
+| R11 | A GPL-incompatible or analytics dependency slips in | Legal exposure; violates a stated principle | CI denylist and license allowlist from B.2, tested with deliberate violations | B.2 |
 | R12 | Scope creep into mobile or co-editing during v1 | Delays everything else | Both explicitly deferred; X.4 is a *compile* guard, not a feature track | X.4, §15 |
 | R13 | Index and vault disagree after an external bulk change | Wrong search results, silently | Reconciliation scan, generation counter, `sherd doctor`, torture suite | P0.5, P0.7, P1.12 |
-| R14 | Trademark collision on the shipped name | Blocks release after all the work | `OD-007` clearance runs in parallel from P-1 and blocks first public release only | P-1.3 |
+| R14 | Trademark collision on the shipped name | Blocks release after all the work | `OD-007` clearance runs in parallel from B and blocks first public release only | B.3 |
 
 ---
 
@@ -837,8 +867,8 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 ### Legal
 | ID | Step |
 |---|---|
-| LEG-001 … LEG-007 | P-1.1 |
-| LEG-006 | P-1.1, P6.7 |
+| LEG-001 … LEG-007 | B.1 |
+| LEG-006 | B.1, P6.7 |
 | LEG-008 | P3.3 |
 
 ### Non-functional — performance
@@ -861,24 +891,24 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 | NFR-REL-005 | P0.7 | | NFR-I18N-001 | X.3.1 |
 | NFR-REL-006 | P0.5 | | NFR-I18N-002 | X.3.6 |
 | NFR-REL-007 | P0.4 | | NFR-I18N-003 | P0.7, X.3.7 |
-| NFR-REL-008 | P0.4 | | NFR-SEC-001 | P-1.2, X.2.2 |
-| NFR-PLAT-001 | P-1.2, P6.8 | | NFR-SEC-002 | X.2.2 |
-| NFR-PLAT-002 | P-1.2 | | NFR-SEC-003 | P1.4 |
+| NFR-REL-008 | P0.4 | | NFR-SEC-001 | B.2, X.2.2 |
+| NFR-PLAT-001 | B.2, P6.8 | | NFR-SEC-002 | X.2.2 |
+| NFR-PLAT-002 | B.2 | | NFR-SEC-003 | P1.4 |
 | NFR-PLAT-003 | P6.7 | | NFR-SEC-004 | P1.4 |
 | NFR-PLAT-004 | P1.2 | | NFR-SEC-005 | P0.4 |
 | | | | NFR-SEC-006 | P3.2 |
-| | | | NFR-SEC-007 | P-1.5, X.2.1 |
+| | | | NFR-SEC-007 | B.5, X.2.1 |
 | | | | NFR-SEC-008 | P5.2, X.2.4 |
-| | | | NFR-SEC-009 | P-1.2, P6.7 |
+| | | | NFR-SEC-009 | B.2, P6.7 |
 
 ### Architecture
 | ID | Step |
 |---|---|
 | ARC-001 … ARC-006 | P1.1 |
-| ARC-UI-001 | P-1.3 (`OD-001`), P1.4 |
+| ARC-UI-001 | B.3 (`OD-001`), P1.4 |
 | ARC-UI-002, ARC-UI-003, ARC-UI-004 | P1.4 (ARC-UI-003 enforced by P6.6) |
 | ARC-MOD-001 | P0.1, P3.6 |
-| ARC-MOD-002 | P-1.2 |
+| ARC-MOD-002 | B.2 |
 | ARC-MOD-003 | P0.4 |
 
 ### Vault
@@ -965,18 +995,18 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 | FR-SYN-024 | P5.4 | | FR-CLI-010 | P5.10 |
 | FR-SYN-025 | P5.3 | | FR-CLI-011, 012 | P6.5 |
 | FR-SYN-030 … 035 | P5.5 | | FR-MOB-001 … 003 | X.4, P7.1 |
-| FR-SYN-040 … 042 | P5.6 | | FR-OBS-001 | P-1.5 |
+| FR-SYN-040 … 042 | P5.6 | | FR-OBS-001 | B.5 |
 | FR-SYN-050 … 052 | P5.9 | | FR-OBS-002 … 005 | P1.12 |
 
 ### Quality gates & open decisions
 | ID | Step | | ID | Step |
 |---|---|---|---|---|
 | QA-001 | X.1.2 | | QA-008 | P0.11, X.1.6 |
-| QA-002 | P-1.4, P0.3 | | QA-009 | P6.8, X.1.1 |
+| QA-002 | B.4, P0.3 | | QA-009 | P6.8, X.1.1 |
 | QA-003 | P0.2, X.1.4 | | QA-010 | P1.4, X.1.8 |
-| QA-004 | P0.1, P0.9, P2.2, P4.1, P4.3, P5.1, X.1.3 | | QA-011 | P-1.2, X.1.9 |
+| QA-004 | P0.1, P0.9, P2.2, P4.1, P4.3, P5.1, X.1.3 | | QA-011 | B.2, X.1.9 |
 | QA-005 | P1.1, X.1.5 | | QA-012 | §1.1 (all steps) |
-| QA-006 | P5.7 | | OD-001 … OD-007 | P-1.3 |
+| QA-006 | P5.7 | | OD-001 … OD-007 | B.3 |
 | QA-007 | P0.4, P0.11, X.1.7 | | | |
 
 ---
@@ -985,14 +1015,14 @@ Every requirement ID in the spec, mapped to the step that delivers it. Where two
 
 Nothing ships until every line is true.
 
-- [ ] All P-1 … P6 phase gates passed and recorded.
+- [ ] All B … P6 phase gates passed and recorded.
 - [ ] Conformance corpus ≥ 500 cases, green on all Tier-1 targets (`QA-002`).
 - [ ] Coverage: ≥ 80% on `internal/`, ≥ 95% on `mdast`, `index`, `vault`, `sync` (`QA-001`).
 - [ ] Fuzz targets running continuously; 7 days with zero new crashers (`QA-004`).
 - [ ] `-race` clean; concurrent-client deadlock stress clean (`QA-005`).
 - [ ] Sync harness: 10,000 randomized runs, zero lost operations (`QA-006`).
 - [ ] Filesystem torture suite green (`QA-007`).
-- [ ] Every §3.1 performance budget met on the reference vault, in CI (`QA-008`, `NFR-PERF-001`…`010`).
+- [ ] Every spec §3.1 performance budget met on the reference vault, in CI (`QA-008`, `NFR-PERF-001`…`010`).
 - [ ] Cross-platform E2E green on all six Tier-1 combinations (`QA-009`).
 - [ ] axe-core: zero critical violations; keyboard-only pass; high-contrast theme verified (`QA-010`, `NFR-A11Y-001`…`004`).
 - [ ] `govulncheck`, `staticcheck`, `gosec`, `go-licenses`, `gofumpt` clean (`QA-011`).

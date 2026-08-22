@@ -10,6 +10,6 @@ import (
 )
 
 func main() {
-	fmt.Fprintln(os.Stderr, "sherdd: not implemented (phase P-1 scaffold)")
+	fmt.Fprintln(os.Stderr, "sherdd: not implemented (phase B scaffold)")
 	os.Exit(1)
 }

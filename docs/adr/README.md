@@ -1,5 +1,10 @@
 # Architecture Decision Records
 
+> **Two label changes postdate these records, and their text was deliberately
+> not rewritten.** The bootstrap phase called `P-1` in records 0001–0008 is now
+> **Phase B** in `PLAN.md` — `P-1` and `P1` differed by one hyphen and were
+> being misread. `P-1.3` is `B.3`, and so on.
+>
 > **Records 0001–0007 predate the project's rename** and refer to it by its
 > original codename, `granite`. They are left unedited on purpose: an ADR is a
 > record of what was decided and why *at the time*, and rewriting history to

@@ -1,6 +1,6 @@
 # Sherd threat model
 
-**Status:** First draft (phase P-1.5). Revisited at every phase gate (track X.2.1).
+**Status:** First draft (phase B.5). Revisited at every phase gate (track X.2.1).
 **Satisfies:** `NFR-SEC-007`
 
 This document states what Sherd defends against, what it does not, and where
