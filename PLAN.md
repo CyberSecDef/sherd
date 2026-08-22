@@ -1,7 +1,7 @@
 # Sherd — Implementation Plan
 
 **Companion document to:** `REQUIREMENT_SPEC.md` (v1.5)
-**Plan version:** 1.7
+**Plan version:** 1.8
 **Status:** Ready for execution
 **Phase numbering:** `P0`…`P7` deliberately mirror the phase table in
 `REQUIREMENT_SPEC.md` §25 and must not be renumbered. **Phase B** is the extra
@@ -63,7 +63,7 @@ B    Bootstrap ─┬─> P0 Foundation ─┬─> P1 Core app ──> P2 Struct
 | Phase | Title | Est. | Status | Gate to next phase |
 |---|---|---|---|---|
 | **B** | Bootstrap & decisions | 3–4 w | ✅ **Complete** | All `OD-*` spikes resolved and recorded as ADRs |
-| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | 🔄 P0.1 done, 10 steps left | `sherd search` on a 20k-note vault; conformance corpus green |
+| **P0** | Foundation (format, vault, index, query, CLI) | 14–18 w | 🔄 P0.1 done, P0.2 started, 10 steps left | `sherd search` on a 20k-note vault; conformance corpus green |
 | **P1** | Core app (daemon, IPC, webview, editor) | 16–20 w | ⬜ Not started | Daily-driver for one user, one device |
 | **P2** | Structure (graph, canvas, modules, replace) | 12–16 w | ⬜ Not started | Parity with the reference product's core module set |
 | **P3** | Extensibility (plugins, themes, settings UI) | 10–14 w | ⬜ Not started | Third party ships a plugin from published docs alone |
@@ -273,7 +273,7 @@ case asserts — it had been scoring 667/667 against an HTML-only parser. And
 `FR-MD-001`'s "CommonMark at 100%" is now a claim about the core specifically —
 see the flavour note in `docs/formats/conformance.md`.
 
-### P0.2 `pkg/format` — frontmatter round-trip **(gate: do not proceed until byte-exact)**  ⬅️ **next**
+### P0.2 `pkg/format` — frontmatter round-trip **(gate: do not proceed until byte-exact)**  🔄 **in progress**
 - YAML 1.2 parsing with the YAML 1.1 boolean footgun disabled (`no`/`off`/`yes`/`on` stay strings unless typed).
 - Comment-, order-, quoting-, and indentation-preserving write path per the `OD-004` ADR.
 - Property type model: `text`, `number`, `checkbox`, `date`, `datetime`, `list`, `tags`, `aliases`, `cssclasses`, `link`, `list-of-link`.
@@ -283,6 +283,85 @@ see the flavour note in `docs/formats/conformance.md`.
 - **Delivers:** `pkg/format/frontmatter`, 200-file fixture set, round-trip property test.
 - **Covers:** `FR-MD-024`, `FR-MD-030`, `FR-MD-031`, `FR-MD-032`, `FR-MD-033`, `FR-MD-034`, `FR-MD-035`, `QA-003`.
 - **Done when:** `write(read(F))` is byte-identical on all 200 fixtures with no key modified; modifying one key changes only that key's bytes.
+
+**Sub-steps.** P0.1 was reported complete on evidence nobody re-ran, and the
+step was large enough that the gap was easy to miss. This step is written down
+in pieces first, each with an exit criterion that names what to run, so
+"finished" is a question with an answer.
+
+| # | Sub-step | Status |
+|---|---|---|
+| **P0.2.1** | Read path and the fixture corpus | ⬅️ **in progress** |
+| **P0.2.2** | The extent scanner | ⬜ |
+| **P0.2.3** | The surgical writer | ⬜ |
+| **P0.2.4** | Property types and the vault registry | ⬜ |
+| **P0.2.5** | The property test and the phase gate | ⬜ |
+
+#### P0.2.1 Read path and the fixture corpus
+- `pkg/format/frontmatter` locates the block (`FR-MD-024`), reads its YAML, and
+  touches nothing: the document is a set of byte ranges into the source, as in
+  `pkg/format/markdown`, because a writer that splices bytes needs positions and
+  a reader that rebuilds the file has already lost.
+- YAML read with the 1.1 boolean footgun off (`FR-MD-030`). `yaml.v3` already
+  keeps `no`/`yes`/`on`/`off` as text; two 1.1-isms it does not are decided
+  here: an underscore-separated number stays text, because someone writing
+  `1_000` in a note means the characters, and a bare `2026-08-22` still
+  resolves, because `FR-MD-031` has `date` and `datetime` types that want it.
+- Invalid YAML is non-blocking (`FR-MD-034`): the error carries a line and
+  column *in the file*, not in the block, and the body is still there to render
+  and index.
+- The 200 `OD-004` fixtures move out of `spikes/` into
+  `testdata/frontmatter/roundtrip/` and freeze there — they are the gate, and a
+  gate that can be regenerated is a gate that can be regenerated into passing.
+  Read-path fixtures the spike had no reason to carry land beside them in
+  `testdata/frontmatter/read/`: invalid YAML, a byte-order mark, a `---` that is
+  not on line 1, a file with no frontmatter at all.
+- The ratchet lands with them, on the model of the conformance corpus: listed
+  and failing is green, listed and passing fails the build, unlisted and failing
+  is a regression. P0.2.3 writes into the same file.
+- **Delivers:** `pkg/format/frontmatter` read path, `testdata/frontmatter/`.
+- **Covers:** `FR-MD-024`, `FR-MD-030` (read half), `FR-MD-034`.
+- **Done when:** the ranges account for every byte of every fixture, so a
+  document reassembled from them is the file it came from; every fixture either
+  parses or reports a position; `no`/`yes`/`on`/`off` and `1_000` are text and
+  `2026-08-22` is a date.
+
+#### P0.2.2 The extent scanner
+- Given a key, the exact byte range of its value: block scalars (`|`, `>`, `|+`,
+  `|-`), nested maps, block and flow sequences, anchors and merge keys, and the
+  comments and blank lines at a block's edges.
+- This is the piece the `OD-004` prototype got wrong — 12 of 197 fixtures, all
+  one cause — and the ADR names it the real work of this step. `yaml.Node` gives
+  a start position and no end, so the extent is computed rather than read off.
+- **Done when:** for every key of every fixture, replacing the computed extent
+  with the bytes already there reproduces the file exactly. That is a test the
+  scanner cannot pass by being approximately right.
+
+#### P0.2.3 The surgical writer
+- Set an existing key by splicing its extent (ADR 0004). The block is never
+  re-serialized.
+- Insert and delete are separate operations, each with a placement rule: where a
+  new key goes, and what happens to the blank lines and comments around a
+  removed one.
+- **Done when:** `write(read(F))` is byte-identical on all 200 fixtures
+  (`QA-003`, `FR-MD-033`), changing one key changes only that key's bytes, and
+  the ratchet is empty.
+
+#### P0.2.4 Property types and the vault registry
+- The type model of `FR-MD-031`; inference when a key is undeclared; the
+  vault-level registry `.sherd/types.json` (`FR-MD-032`); a mismatch is a
+  warning and never data loss; the reserved keys of `FR-MD-035`.
+- **Done when:** every type in `FR-MD-031` is inferred from at least one
+  fixture; a declared type that disagrees with the file produces a warning and
+  leaves the file's bytes alone.
+
+#### P0.2.5 The property test and the phase gate
+- The `QA-003` property, over generated frontmatter rather than only the frozen
+  corpus: for any frontmatter F, `write(read(F))` is byte-identical when no key
+  is modified.
+- **Done when:** the property test passes, the corpus is green with an empty
+  ratchet, and the figures in this section each name the command that produces
+  them.
 
 ### P0.3 `pkg/format` — extended syntax
 Implement as goldmark extensions, each with corpus cases added the same commit.
