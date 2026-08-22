@@ -28,6 +28,8 @@ than repeated from scratch.
 | `jama` | **Rejected** | Jama Software's registered `JAMA CONNECT` mark covers downloadable document-management software; plus the AMA's JAMA journal |
 | `yame` | **Rejected** | crates.io `yame` is an actively maintained *"lightweight terminal Markdown editor"* |
 | `yamed` | **Available but weak** | Namespaces clear; but reads as "Y-A-Med", and the "Yet Another" framing undersells the product |
+| **`sherd`** | **Passes — strongest candidate so far** | No company, product, or mark found; npm and crates.io free; only domains are parked |
+| `marginalia`, `gloss`, `quire`, `noesis`, `episteme`, `sensorium`, `imago` | Rejected | All three package namespaces occupied, or a large incumbent project |
 
 ## Screening detail
 
@@ -295,6 +297,63 @@ tools; this project is not one, and would be renaming itself twice.
 
 Practical footnote: "yet another X" is close to unsearchable, and it dates a
 project to the era in which it was named.
+
+### `sherd` — passes, and is the best candidate found
+
+A *sherd* is a fragment of pottery — the unit archaeologists recover and
+reassemble into a whole. For a tool whose entire premise is that atomic notes
+link into something larger, the metaphor is apt without being descriptive, which
+is the combination every rejected candidate failed to achieve.
+
+Derived from the user's seed word *shard*, using the archaeological spelling to
+escape the extremely crowded database-sharding namespace.
+
+**Clear:**
+
+- **No company, product, or trademark found.**
+- **npm: free. crates.io: free.**
+- **GitHub: no exact-name project.** The apparent hits are different words —
+  `rancher/sherdock` (Docker image manager, 109★) and several `sherdog` MMA
+  scrapers.
+- Five letters, unambiguous to pronounce, trivial to type as a command.
+
+**Occupied, but not by a competitor:**
+
+- **PyPI `sherd`** — *"Pottery Profile Vectoriser — automated SVG pottery
+  profile"*, v0.2.0. An archaeology tool, in a wholly different class. It shares
+  the name because it shares the *subject*, which is arguably reinforcing rather
+  than conflicting.
+- **Domains are all parked by investors, none by a product:** `sherd.com`
+  (2003, no content), `sherd.dev` and `sherd.app` (both registered 2024-07-31,
+  both serving identical "Coming Soon" placeholders), `sherd.org` (registered
+  2026-08-08, serving a Namecheap auction page), `sherd.net` (2011).
+  `sherd.io`, `sherd.md`, `getsherd.com`, `sherdapp.com`, and `sherd.tools`
+  were inconclusive over RDAP and need a registrar check.
+
+**Two reservations, stated plainly:**
+
+1. **A primary domain must be bought from a parker, or routed around.** None is
+   in productive use, so purchase is plausible, but it is a cost rather than a
+   free choice.
+2. **`sherd` and `shard` are near-homophones**, and *shard* is ubiquitous in
+   software — database sharding, Elasticsearch, Discord. Expect mistyping and
+   search drift toward the wrong word. This is a real discoverability tax, and
+   the honest counterweight is that *sherd* is a correctly-spelled English word
+   with a meaning that fits, not an invented misspelling.
+
+### Rejected from the same batch
+
+Screened alongside `sherd`, all occupied across package namespaces:
+
+| Candidate | Killed by |
+|---|---|
+| `marginalia` | npm, PyPI, crates.io all taken; 692 repos, top at 1,919★ (the Marginalia search engine — adjacent domain) |
+| `gloss` | All three taken; 10,135 repos, top at 3,131★ |
+| `quire` | All three taken; 608 repos, top at 539★ |
+| `noesis` | All three taken; 911 repos |
+| `episteme` | PyPI and crates.io taken; top repo 1,149★ |
+| `sensorium` | npm taken; `sensorium/Mozzi` at 1,285★ holds the GitHub org |
+| `imago` | All three taken; 1,102 repos, top at 4,006★ |
 
 ## Not yet screened
 
