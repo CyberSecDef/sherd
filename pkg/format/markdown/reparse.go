@@ -84,7 +84,7 @@ func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 	// at all, so nothing in the tree shows that adding a reference elsewhere
 	// will bring it to life. Reasoning locally about a document with a region
 	// like that is reasoning from an incomplete picture.
-	if d.guessed || d.docScoped || !accountsForItsSource(d) {
+	if d.guessed || d.docScoped || d.linkOpen || !accountsForItsSource(d) {
 		return nil, false
 	}
 
@@ -132,7 +132,7 @@ func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 	}
 
 	sub := Parse(next[lo:hi+delta], d.opts)
-	if sub.guessed || len(sub.Root.Children) == 0 || !accountsForItsSource(sub) {
+	if sub.guessed || sub.linkOpen || len(sub.Root.Children) == 0 || !accountsForItsSource(sub) {
 		// No blocks left at all means the edit blanked this one, and a blank
 		// region is exactly what a neighbouring construct can grow into.
 		return nil, false
@@ -157,8 +157,9 @@ func (d *Document) reparseBlock(e Edit, next []byte) (*Document, bool) {
 		shift(clone, delta)
 		root.Children = append(root.Children, clone)
 	}
-	// guessed and docScoped stay false: the guards above required the document
-	// to have neither, and nothing in the reparsed slice introduced one.
+	// guessed, docScoped and linkOpen stay false: the guards above required the
+	// document to have none of them, and nothing in the reparsed slice
+	// introduced one.
 	return &Document{Source: next, Root: root, opts: d.opts}, true
 }
 

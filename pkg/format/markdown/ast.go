@@ -60,6 +60,12 @@ type Document struct {
 	// disagrees with a full parse.
 	guessed bool
 
+	// linkOpen records that somewhere in the file a link destination is left
+	// open — "[a](" with parentheses that never balance. A ")" typed anywhere
+	// after it closes the destination and swallows every block in between, so
+	// no block in such a document is independent of an edit made elsewhere.
+	linkOpen bool
+
 	// docScoped records whether the document contains a definition whose scope
 	// is the whole file — a link reference definition or a footnote — which
 	// makes every block's rendering depend on bytes outside it. Computed once,

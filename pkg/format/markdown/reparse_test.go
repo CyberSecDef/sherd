@@ -99,6 +99,16 @@ func TestReparseTakesTheFastPathWhereItShould(t *testing.T) {
 			why: "a fence of one line has no closer, so it grows into whatever an edit leaves after it",
 		},
 		{
+			// Found by the nightly fuzz run. A link destination is the one
+			// inline construct that reaches across a blank line: the ")"
+			// closes a destination opened before it and folds every block in
+			// between into the link.
+			name: "editing a document that leaves a link destination open",
+			src:  "[a]((x )y\n\nz\n",
+			old:  "z", new: "z)", wantFast: false,
+			why: "the edit completes a destination opened in an earlier block, which changes what every block between them is",
+		},
+		{
 			name: "typing a list marker between two lists", src: "- a\n\nmid\n\n- b\n",
 			old: "mid", new: "- mid", wantFast: false,
 			why: "a blank line does not separate two lists; they are one loose list, so the edited block joins its neighbours",

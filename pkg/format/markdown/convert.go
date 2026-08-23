@@ -46,7 +46,38 @@ func Parse(source []byte, opts Options) *Document {
 		}
 		return !doc.docScoped
 	})
+	doc.linkOpen = leavesALinkDestinationOpen(source)
 	return doc
+}
+
+// leavesALinkDestinationOpen reports whether the source holds a "](" whose
+// parentheses never balance.
+//
+// A link destination is the one inline construct that reaches across a blank
+// line: "[0]((0 )000" leaves a parenthesis open, and a ")" typed anywhere later
+// in the file closes it, folding every block in between into the link. The
+// blocks look ordinary until that happens — the paragraph before the edit ends
+// where a paragraph should — so nothing in the tree says the reparser is
+// reasoning about a document that can rearrange itself from a distance.
+//
+// The scan is deliberately blunt: a "](" inside a code span counts, and the
+// only cost of that is a reparse taking the slow path. Found by the nightly
+// fuzz run, 47 minutes in.
+func leavesALinkDestinationOpen(src []byte) bool {
+	depth := 0
+	for i := 0; i+1 < len(src); i++ {
+		switch {
+		case src[i] == '\\':
+			i++
+		case depth == 0 && src[i] == ']' && src[i+1] == '(':
+			depth, i = 1, i+1
+		case depth > 0 && src[i] == '(':
+			depth++
+		case depth > 0 && src[i] == ')':
+			depth--
+		}
+	}
+	return depth > 0
 }
 
 type builder struct {

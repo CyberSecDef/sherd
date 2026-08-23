@@ -1,0 +1,61 @@
+{
+  "type": "document",
+  "range": [
+    0,
+    14
+  ],
+  "children": [
+    {
+      "type": "paragraph",
+      "range": [
+        0,
+        13
+      ],
+      "children": [
+        {
+          "type": "link",
+          "range": [
+            0,
+            13
+          ],
+          "children": [
+            {
+              "type": "text",
+              "range": [
+                1,
+                2
+              ],
+              "literal": "a"
+            }
+          ],
+          "attrs": {
+            "destination": "(x"
+          }
+        },
+        {
+          "type": "text",
+          "range": [
+            13,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "range": [
+        13,
+        13
+      ],
+      "children": [
+        {
+          "type": "text",
+          "range": [
+            13,
+            13
+          ]
+        }
+      ]
+    }
+  ]
+}
