@@ -292,8 +292,8 @@ in pieces first, each with an exit criterion that names what to run, so
 | # | Sub-step | Status |
 |---|---|---|
 | **P0.2.1** | Read path and the fixture corpus | ✅ |
-| **P0.2.2** | The extent scanner | ✅ |
-| **P0.2.3** | The surgical writer | ⬅️ **next** |
+| **P0.2.2** | The extent scanner | 🔄 **reopened** — two extent defects found by the nightly after it was called done |
+| **P0.2.3** | The surgical writer | ⬜ blocked on P0.2.2 |
 | **P0.2.4** | Property types and the vault registry | ⬜ |
 | **P0.2.5** | The property test and the phase gate | ⬜ |
 
@@ -355,7 +355,7 @@ with a local key winning — which is what a decoder does, but it means a caller
 reading `prod` cannot see which keys were inherited. Neither affects the write
 path, which never re-serializes anything.
 
-#### P0.2.2 The extent scanner ✅
+#### P0.2.2 The extent scanner 🔄 **reopened**
 - Given a key, the exact byte range of its value: block scalars (`|`, `>`, `|+`,
   `|-`), nested maps, block and flow sequences, anchors and merge keys, and the
   comments and blank lines at a block's edges.
@@ -378,7 +378,7 @@ is worse than none, because it looks like evidence.
 |---|---|---|
 | Every key's extent covers exactly its value | ✅ | `spliced 419 values, skipped 2 anchored ones` over 215 fixtures, top-level keys and nested paths. An extent that stops short leaves debris, so the block fails to parse or the key reads back wrong; one that runs long eats a comment, a blank line, or the next key, so another property changes or vanishes. Both directions fail the test. |
 | Boundary shapes are pinned individually | ✅ | 31 named cases: comments, quoting, escapes, all four chomping modes, explicit indentation indicators, nested maps, block and flow collections, tags, aliases, multi-line plain scalars, keys with no value. A corpus failure says which of 200 files; these say which rule. |
-| The scanner is fuzzed | ✅ | `FuzzExtent` and `FuzzParse` land with the scanner, per X.1.3's rule that a parser gets a target the day it does. The scanner ran 20 minutes clean at the end — 86.5 M executions, 177 new interesting inputs — after eighteen minutes spread over the day found ten defects. Twenty-three of those inputs are committed as seeds, so each one is a permanent regression test, and both targets joined `make fuzz`, the CI smoke job, and the nightly matrix. The reader's own target ran 8 minutes clean over the same code. |
+| The scanner is fuzzed | ⚠️ **found two defects after this table was written** — see the note below | `FuzzExtent` and `FuzzParse` land with the scanner, per X.1.3's rule that a parser gets a target the day it does. The scanner ran 20 minutes clean at the end — 86.5 M executions, 177 new interesting inputs — after eighteen minutes spread over the day found ten defects. Twenty-three of those inputs are committed as seeds, so each one is a permanent regression test, and both targets joined `make fuzz`, the CI smoke job, and the nightly matrix. The reader's own target ran 8 minutes clean over the same code. |
 | Coverage stays over the `QA-001` floor | ✅ | `make cover` → `pkg/format 95.5%`. |
 
 *What the fuzz target found, in the order it found it.* The corpus said the
@@ -421,6 +421,44 @@ splice is not, each recorded in the tests rather than left to be rediscovered:
 - **Replacing an anchored value removes the anchor.** Every alias to it stops
   resolving, and the block stops parsing. The writer decides: refuse, or keep
   the anchor and replace only what follows it.
+
+*Two shapes where the extent itself is wrong, found after this step was called
+done.* The 20-minute clean run above is the evidence the row cites, and the
+nightly kept going afterwards. It failed on 2026-08-31, 09-01, 09-02, 09-03 and
+09-04 — five consecutive runs, `frontmatter/FuzzExtent` every time, the other
+three targets clean at two hours each — and nobody was reading the result. The
+schedule was removed on 2026-09-04 when the project paused, so these two are
+the standing state of the scanner, not a queue that will grow.
+
+| Input | Extent | What the splice does |
+|---|---|---|
+| `---\n ? 0\n0\n---` | `[9,10)` = `"0"` | Lands on the **key's** bytes, not the value's. After replacing, the key does not read back at all — `Get` returns `<nil>`. Also seen as `? 00` and `? 000`, the scan running further as the key grows. |
+| `---\n{0: 0\n0}\n---` | `[8,9)` = `"0"` | Stops at the first `0` of a plain scalar that continues onto the next line inside a flow mapping. The splice leaves ` 0` stranded, and the key reads `SENTINEL 0`. |
+
+Both reproduce on this tree in under 5 ms, as `FuzzExtent` seeds in the format
+of the twenty-three already committed:
+
+```
+go test fuzz v1
+[]byte("---\n ? 0\n0\n---")
+int(0)
+```
+
+They are deliberately **not** committed as seeds, which is where the other
+twenty-three live: `ci.yml`'s `Fuzz (smoke)` job runs the seed corpus, so
+committing them turns `main` red on every push until the scanner is fixed, and
+that is a decision for whoever restarts this, not for the commit that paused it.
+
+The first is adjacent to finding 9 and to the placement rule above, but it is
+not the same thing: the placement rule says the *writer* must decline `? key`
+because splicing cannot write a colon, whereas this says the *scanner* hands
+back the wrong range for it. The writer declining would hide it, not fix it. The
+second is finding 2 — a plain scalar crossing a line break — in flow context,
+which the fix for finding 2 did not cover.
+
+**P0.2.2's status is therefore 🔄, not ✅**, and P0.2.3 should not start until
+the scanner is right on both: a writer built on a wrong extent damages files,
+which is the whole reason this sub-step exists.
 
 #### P0.2.3 The surgical writer
 - Set an existing key by splicing its extent (ADR 0004). The block is never
