@@ -1,14 +1,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 The Sherd Authors
 #
-# Nightly fuzzing (FR-MD-005).
+# On-demand long-run fuzzing (FR-MD-005).
 #
 # The requirement is 24 hours of fuzzing with zero crashes, which no pull
-# request can afford to wait for. This workflow accumulates it instead: two
-# hours per target per night, so the figure is reached over roughly a week and
-# then keeps going, which is the more useful property anyway — the parser keeps
-# changing, and a one-time 24 hours would say nothing about the version that
-# ships.
+# request can afford to wait for. This workflow runs a long session per target
+# on request — two hours each by default — so the figure accrues across
+# however many times it is dispatched. It ran nightly on a cron until
+# 2026-09-04; the schedule was removed and the figure no longer accrues on its
+# own.
 #
 # A failure here is a real defect. The input that caused it is uploaded so it
 # can be committed as a seed, where it stays a permanent regression test.
@@ -16,9 +16,6 @@
 name: Fuzz
 
 on:
-  schedule:
-    # 03:00 UTC, outside the working day in the maintainer's timezone.
-    - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
       minutes:
